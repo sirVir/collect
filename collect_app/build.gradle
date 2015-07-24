@@ -5,12 +5,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    buildToolsVersion "22.0.1"
-    compileSdkVersion "Google Inc.:Google APIs:19"
+    buildToolsVersion "23"
+    compileSdkVersion "Google Inc.:Google APIs:22"
     defaultConfig {
         applicationId "org.odk.collect"
-        minSdkVersion 7
-        targetSdkVersion 8
+        minSdkVersion 9
+        targetSdkVersion 22
     }
 
     buildTypes {
