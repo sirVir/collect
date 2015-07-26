@@ -19,6 +19,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.Map;
 
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -37,6 +40,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
+
+import com.google.gson.Gson;
 
 /**
  * Handles admin preferences, which are password-protectable and govern which app features and
@@ -143,47 +148,72 @@ public class AdminPreferencesActivity extends PreferenceActivity {
 				}
 			}
 
-			File dst = new File(writeDir.getAbsolutePath()
-					+ "/collect.settings");
-			boolean success = AdminPreferencesActivity.saveSharedPreferencesToFile(dst, this);
-			if (success) {
+			File pref_dst = new File(writeDir.getAbsolutePath()
+					+ "/collect_pref.settings");
+
+			File admin_dst = new File(writeDir.getAbsolutePath()
+					+ "/collect_admin.settings");
+
+
+			boolean success1 = AdminPreferencesActivity.saveSharedPreferencesToFile(pref_dst, this, Collect.CONFIG_TYPE.USER_CONFIG);
+			boolean success2 = AdminPreferencesActivity.saveSharedPreferencesToFile(admin_dst, this,Collect.CONFIG_TYPE.ADMIN_CONFIG );
+
+			if (success1 && success2) {
 				Toast.makeText(
 						this,
 						"Settings successfully written to "
-								+ dst.getAbsolutePath(), Toast.LENGTH_LONG)
+								+ pref_dst.getAbsolutePath() + " and " + admin_dst.getAbsolutePath(),
+						Toast.LENGTH_LONG)
 						.show();
 			} else {
 				Toast.makeText(this,
-						"Error writing settings to " + dst.getAbsolutePath(),
+						"Error writing settings",
 						Toast.LENGTH_LONG).show();
 			}
 			return true;
+
+
 
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
 
-	public static boolean saveSharedPreferencesToFile(File dst, Context context) {
+	public static boolean saveSharedPreferencesToFile(File dst, Context context, Collect.CONFIG_TYPE type) {
 		// this should be in a thread if it gets big, but for now it's tiny
 		boolean res = false;
-		ObjectOutputStream output = null;
+		FileOutputStream output = null;
+		Map<String,?> values = null;
 		try {
-			output = new ObjectOutputStream(new FileOutputStream(dst));
-			SharedPreferences pref = PreferenceManager
-					.getDefaultSharedPreferences(context);
-			SharedPreferences adminPreferences = context.getSharedPreferences(
-					AdminPreferencesActivity.ADMIN_PREFERENCES, 0);
+			switch (type)
+			{
+				case ADMIN_CONFIG:
+					output = new FileOutputStream(dst);
+					SharedPreferences adminPreferences = context.getSharedPreferences(
+                            AdminPreferencesActivity.ADMIN_PREFERENCES, 0);
+					values = adminPreferences.getAll();
+					String adminPrefSerialized = new Gson().toJson(values);
+					output.write(adminPrefSerialized.getBytes());
+					res = true;
+					break;
 
-			output.writeObject(pref.getAll());
-			output.writeObject(adminPreferences.getAll());
+				case USER_CONFIG:
+					output = new FileOutputStream(dst);
+					SharedPreferences pref = PreferenceManager
+							.getDefaultSharedPreferences(context);
+					values = pref.getAll();
+					String prefSerialized = new Gson().toJson(values);
+					output.write(prefSerialized.getBytes());
+					res = true;
+					break;
+			}
 
-			res = true;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
+		}
+		finally {
 			try {
 				if (output != null) {
 					output.flush();
@@ -231,7 +261,7 @@ public class AdminPreferencesActivity extends PreferenceActivity {
 				}
         } catch (Exception e) {
             e.printStackTrace();
-            Log.w("AdminPreferencesActivity", "Unable to get EvalBehavior -- defaulting to recommended mode");
+            Log.w("AdminPreferencesActivity", "Unable to get EvalBehavior - defaulting to recommended mode");
             mode = FormDef.recommendedMode;
         }
 

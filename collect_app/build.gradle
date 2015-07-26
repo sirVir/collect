@@ -7,6 +7,7 @@ apply plugin: 'com.android.application'
 android {
     buildToolsVersion "23"
     compileSdkVersion "Google Inc.:Google APIs:22"
+
     defaultConfig {
         applicationId "org.odk.collect"
         minSdkVersion 9
@@ -27,8 +28,22 @@ android {
         pickFirst 'META-INF/NOTICE'
         pickFirst 'META-INF/NOTICE.txt'
     }
+
+    dexOptions {
+        preDexLibraries = false
+    }
 }
 
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
+    compile ('com.google.android.gms:play-services-gcm:7.5.0')
+            {
+                exclude module: 'support-v4'
+            }
+    compile ('com.google.android.gms:play-services-maps:7.5.0')
+            {
+                exclude module: 'support-v4'
+            }
+    compile 'com.android.support:appcompat-v7:22.2.1'
+
 }

@@ -56,6 +56,10 @@ public class Collect extends Application {
     public static final String TMPXML_PATH = CACHE_PATH + File.separator + "tmp.xml";
     public static final String LOG_PATH = ODK_ROOT + File.separator + "log";
 
+    public static enum CONFIG_TYPE {
+        ADMIN_CONFIG, USER_CONFIG
+    }
+
     public static final String DEFAULT_FONTSIZE = "21";
 
     // share all session cookies across all sessions...
