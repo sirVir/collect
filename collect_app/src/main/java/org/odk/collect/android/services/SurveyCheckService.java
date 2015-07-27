@@ -81,7 +81,7 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
                     //specify target service - must extend GcmTaskService
                     .setService(SurveyCheckService.class)
                             //repeat every 30 seconds
-                    .setPeriod(120)
+                    .setPeriod(600)
                             //specify how much earlier the task can be executed (in seconds)
                     .setFlex(20)
                             //tag that is unique to this task (can be used to cancel task)

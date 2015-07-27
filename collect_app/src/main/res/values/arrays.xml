@@ -74,4 +74,16 @@
 		<item>@string/form_processing_logic_2</item>
 		<item>@string/form_processing_logic_3</item>
 	</string-array>
+	<string-array translatable="false"
+		name="autopull_entry_values">
+		<item>disabled</item>
+		<item>connected</item>
+		<item>unmetered</item>
+	</string-array>
+	<string-array
+		name="autopull_entries">
+		<item>@string/disabled_connection_state</item>
+		<item>@string/connected_connection_state</item>
+		<item>@string/unmetered_connection_state</item>
+	</string-array>
 </resources>

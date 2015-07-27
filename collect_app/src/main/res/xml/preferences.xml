@@ -57,6 +57,15 @@
             android:key="autosend_network"
             android:summary="@string/autosend_network_summary"
             android:title="@string/autosend_network" />
+        <ListPreference
+            android:id="@+id/autopull_new"
+            android:defaultValue="unmetered"
+            android:dialogTitle="@string/change_autopull"
+            android:entries="@array/autopull_entries"
+            android:entryValues="@array/autopull_entry_values"
+            android:key="protocol"
+            android:title="@string/autopull"
+            android:summary="@string/autopull_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="@string/client"

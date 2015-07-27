@@ -334,4 +334,10 @@
 <string name="no_blank_search">Search field cannot be blank.</string>
 <string name="select_maps_account">You have selected Google Maps Engine as your server, please select a corresponding Google Account in the General Settings before continuing</string>
 <string name="get_project_IDs">Getting Project IDs</string>
+<string name="disabled_connection_state">Disabled</string>
+<string name="connected_connection_state">WiFi/data connection</string>
+<string name="unmetered_connection_state">WiFi onlye</string>
+<string name="change_autopull">When do you want to pull the surveys?</string>
+<string name="autopull">Auto pull conditions</string>
+<string name="autopull_summary">By WiFi, data connection or disabled</string>
 </resources>

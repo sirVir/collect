@@ -101,9 +101,13 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
 
   public static final String KEY_AUTOSEND_WIFI = "autosend_wifi";
   public static final String KEY_AUTOSEND_NETWORK = "autosend_network";
+  public static final String KEY_AUTOPULL_NEW_SURVEYS = "autopull_new";
 
   public static final String KEY_NAVIGATION = "navigation";
   public static final String KEY_CONSTRAINT_BEHAVIOR = "constraint_behavior";
+
+
+
 
   private PreferenceScreen mSplashPathPreference;
 
@@ -114,6 +118,8 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
 
   private CheckBoxPreference mAutosendWifiPreference;
   private CheckBoxPreference mAutosendNetworkPreference;
+  private ListPreference mAutoPullPreference;
+
   private ListPreference mProtocolPreference;
 
   private PreferenceScreen mProtocolSettings;
@@ -142,6 +148,8 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
     PreferenceCategory autosendCategory = (PreferenceCategory) findPreference(getString(R.string.autosend));
     mAutosendWifiPreference = (CheckBoxPreference) findPreference(KEY_AUTOSEND_WIFI);
     mAutosendNetworkPreference = (CheckBoxPreference) findPreference(KEY_AUTOSEND_NETWORK);
+    mAutoPullPreference = (ListPreference) findPreference(KEY_AUTOPULL_NEW_SURVEYS);
+
     PreferenceCategory serverCategory = (PreferenceCategory) findPreference(getString(R.string.server_preferences));
 
     mProtocolPreference = (ListPreference) findPreference(KEY_PROTOCOL);
