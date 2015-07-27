@@ -22,5 +22,5 @@ import java.util.HashMap;
  * @author Carl Hartung (carlhartung@gmail.com)
  */
 public interface FormListDownloaderListener {
-    void formListDownloadingComplete(HashMap<String, FormDetails> value);
+    void formListDownloadingComplete(HashMap<String, FormDetails> value, Boolean silent);
 }

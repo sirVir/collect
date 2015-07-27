@@ -260,7 +260,7 @@ public class DownloadFormListTask extends AsyncTask<Void, String, HashMap<String
     protected void onPostExecute(HashMap<String, FormDetails> value) {
         synchronized (this) {
             if (mStateListener != null) {
-                mStateListener.formListDownloadingComplete(value);
+                mStateListener.formListDownloadingComplete(value, false);
             }
         }
     }

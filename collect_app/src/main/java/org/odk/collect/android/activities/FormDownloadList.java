@@ -125,6 +125,7 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
         super.onCreate(savedInstanceState);
         setContentView(R.layout.remote_file_manage_list);
         setTitle(getString(R.string.app_name) + " > " + getString(R.string.get_forms));
+
         mAlertMsg = getString(R.string.please_wait);
 
         // need white background before load
@@ -253,6 +254,13 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
         getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         getListView().setItemsCanFocus(false);
         setListAdapter(mFormListAdapter);
+
+        Intent intent = getIntent();
+
+        if (intent.getSerializableExtra("SurveyList") != null) {
+            HashMap<String, FormDetails> surveyList = (HashMap<String, FormDetails>) intent.getSerializableExtra("SurveyList");
+            formListDownloadingComplete(surveyList, true);
+        }
     }
 
 
@@ -565,10 +573,12 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
      *
      * @param result
      */
-    public void formListDownloadingComplete(HashMap<String, FormDetails> result) {
-        dismissDialog(PROGRESS_DIALOG);
+    public void formListDownloadingComplete(HashMap<String, FormDetails> result, Boolean silent) {
+        if (!silent) {
+            dismissDialog(PROGRESS_DIALOG);
         mDownloadFormListTask.setDownloaderListener(null);
         mDownloadFormListTask = null;
+        }
 
         if (result == null) {
             Log.e(t, "Formlist Downloading returned null.  That shouldn't happen");

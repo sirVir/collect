@@ -33,6 +33,7 @@ import org.odk.collect.android.preferences.AdminPreferencesActivity;
 import org.odk.collect.android.preferences.PreferencesActivity;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
+import org.odk.collect.android.services.SurveyCheckService;
 import org.odk.collect.android.utilities.CompatibilityUtils;
 
 import android.app.Activity;
@@ -302,6 +303,10 @@ public class MainMenuActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        //TODO check if to display with the settings
+        SurveyCheckService.scheduleRepeat(this);
+
         SharedPreferences sharedPreferences = this.getSharedPreferences(
                 AdminPreferencesActivity.ADMIN_PREFERENCES, 0);
 
