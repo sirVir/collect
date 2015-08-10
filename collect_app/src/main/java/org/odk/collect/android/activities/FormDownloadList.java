@@ -24,6 +24,7 @@ import org.odk.collect.android.listeners.FormDownloaderListener;
 import org.odk.collect.android.listeners.FormListDownloaderListener;
 import org.odk.collect.android.logic.FormDetails;
 import org.odk.collect.android.preferences.PreferencesActivity;
+import org.odk.collect.android.services.SurveyCheckService;
 import org.odk.collect.android.tasks.DownloadFormListTask;
 import org.odk.collect.android.tasks.DownloadFormsTask;
 import org.odk.collect.android.utilities.CompatibilityUtils;
@@ -261,6 +262,11 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
             HashMap<String, FormDetails> surveyList = (HashMap<String, FormDetails>) intent.getSerializableExtra("SurveyList");
             formListDownloadingComplete(surveyList, true);
         }
+
+        if (intent.hasExtra("Reschedule")) {
+            SurveyCheckService.scheduleRepeat(this);
+        }
+
     }
 
 

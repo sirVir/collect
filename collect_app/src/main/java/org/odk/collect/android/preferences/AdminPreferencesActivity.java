@@ -23,6 +23,7 @@ import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
 
+import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 
@@ -85,19 +86,27 @@ public class AdminPreferencesActivity extends PreferenceActivity {
 
     public static String KEY_AUTOSEND_WIFI = "autosend_wifi";
     public static String KEY_AUTOSEND_NETWORK = "autosend_network";
+	public static String KEY_AUTOPULL_NEW = "autopull_new";
+	public static String KEY_AUTOPULL_FREQUENCY = "autopull_frequency";
 
-    public static String KEY_NAVIGATION = "navigation";
+
+	public static String KEY_NAVIGATION = "navigation";
     public static String KEY_CONSTRAINT_BEHAVIOR = "constraint_behavior";
 
     public static String KEY_FORM_PROCESSING_LOGIC = "form_processing_logic";
 
     private static final int SAVE_PREFS_MENU = Menu.FIRST;
 
-    @Override
+
+	private CheckBoxPreference mAutoPullPreference;
+	private CheckBoxPreference mAutoPullFrequency;
+
+
+	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle(getString(R.string.app_name) + " > "
-                + getString(R.string.admin_preferences));
+				+ getString(R.string.admin_preferences));
 
         PreferenceManager prefMgr = getPreferenceManager();
         prefMgr.setSharedPreferencesName(ADMIN_PREFERENCES);
@@ -105,18 +114,32 @@ public class AdminPreferencesActivity extends PreferenceActivity {
 
         addPreferencesFromResource(R.xml.admin_preferences);
 
+
+		mAutoPullPreference = (CheckBoxPreference) findPreference(KEY_AUTOPULL_NEW);
+
+		mAutoPullFrequency = (CheckBoxPreference) findPreference(KEY_AUTOPULL_FREQUENCY);
+
+
         ListPreference mFormProcessingLogicPreference = (ListPreference) findPreference(KEY_FORM_PROCESSING_LOGIC);
         mFormProcessingLogicPreference.setSummary(mFormProcessingLogicPreference.getEntry());
         mFormProcessingLogicPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
-                String entry = (String) ((ListPreference) preference).getEntries()[index];
-                preference.setSummary(entry);
-                return true;
-            }
-        });
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+
+				if (preference.getKey() == KEY_AUTOPULL_NEW)
+					if (!preference.isEnabled())
+						mAutoPullFrequency.setEnabled(false);
+					else {
+						mAutoPullFrequency.setEnabled(true);
+					}
+
+				int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
+				String entry = (String) ((ListPreference) preference).getEntries()[index];
+				preference.setSummary(entry);
+				return true;
+			}
+		});
     }
 
     @Override

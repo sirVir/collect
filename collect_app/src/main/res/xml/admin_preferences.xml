@@ -100,6 +100,18 @@
             android:summary="@string/found_in_settings"
             android:title="@string/autosend_network" />
         <CheckBoxPreference
+            android:id="@+id/autopull_new"
+            android:defaultValue="true"
+            android:key="autopull_new"
+            android:summary="@string/found_in_settings"
+            android:title="@string/autopull" />
+        <CheckBoxPreference
+            android:id="@+id/autopull_frequency"
+            android:defaultValue="true"
+            android:key="autopull_frequency"
+            android:summary="@string/found_in_settings"
+            android:title="@string/autopull_frequency_title" />
+        <CheckBoxPreference
             android:id="@+id/navigation"
             android:defaultValue="true"
             android:key="navigation"

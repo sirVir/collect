@@ -86,4 +86,22 @@
 		<item>@string/connected_connection_state</item>
 		<item>@string/unmetered_connection_state</item>
 	</string-array>
+
+	<string-array translatable="false"
+		name="autopull_frequency_entry_values">
+		<item>86400</item>
+		<item>21600</item>
+		<item>3600</item>
+		<item>600</item>
+		<item>60</item>
+
+	</string-array>
+	<string-array
+		name="autopull_frequency_entries">
+		<item>@string/daily</item>
+		<item>@string/four_times</item>
+		<item>@string/hourly</item>
+		<item>@string/ten_minutes</item>
+		<item>@string/minute</item>
+	</string-array>
 </resources>
