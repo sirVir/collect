@@ -305,7 +305,7 @@ public class MainMenuActivity extends Activity {
         super.onResume();
 
         //TODO check if to display with the settings
-        SurveyCheckService.scheduleRepeat(this);
+        SurveyCheckService.refreshRepeat(this, false);
 
         SharedPreferences sharedPreferences = this.getSharedPreferences(
                 AdminPreferencesActivity.ADMIN_PREFERENCES, 0);

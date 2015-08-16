@@ -30,6 +30,11 @@ import java.util.HashMap;
 
 public class SurveyCheckService extends GcmTaskService implements FormListDownloaderListener {
 
+    private static final int notificationId = 420734;
+    private static Boolean isScheduled = false;
+    private static Boolean isDownloaded = false;
+
+
     private DownloadFormListTask mDownloadFormListTask;
     public static final String GCM_REPEAT_TAG = "repeat|[7200,1800]";
     private static final String TAG = SurveyCheckService.class.getSimpleName();
@@ -39,7 +44,9 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
         //called when app is updated to a new version, reinstalled etc.
         //you have to schedule your repeating tasks again
         super.onInitializeTasks();
-        scheduleRepeat(this);
+        isScheduled = false;
+        isDownloaded = false;
+        refreshRepeat(this, true);
     }
 
 
@@ -51,11 +58,11 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo ni = connectivityManager.getActiveNetworkInfo();
 
-        if (ni == null || !ni.isConnected()) {
+        if (ni == null || !ni.isConnected() || isDownloaded) {
             return GcmNetworkManager.RESULT_RESCHEDULE;
         } else {
 
-            HashMap<String, FormDetails> mFormNamesAndURLs = new HashMap<String, FormDetails>();
+           //  HashMap<String, FormDetails> mFormNamesAndURLs = new HashMap<String, FormDetails>();
 
 
             if (mDownloadFormListTask != null &&
@@ -76,9 +83,19 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
         }
     }
 
-    public static void scheduleRepeat(Context context) {
-
-        scheduleRepeat(context, false);
+    /**
+     *
+     * @param context The Context of the app to be passed
+     * @param forced Flag if to force the rescheduling. Setting it to true will reset the current waiting period
+     */
+    public static void refreshRepeat(Context context, boolean forced) {
+        if (forced)
+            scheduleRepeat(context, false);
+        else if (!isScheduled)
+        {
+            scheduleRepeat(context, false);
+        }
+        isScheduled = true;
     }
 
     private static void scheduleRepeat(Context context, Boolean isDisabled) {
@@ -133,12 +150,11 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
     }
 
 
-    @Override
     public void formListDownloadingComplete(final HashMap<String, FormDetails> value, Boolean silent) {
 
+        isDownloaded = true;
         if (!value.isEmpty()) {
 
-            scheduleRepeat(this, true);
             Handler h = new Handler(getMainLooper());
             final Context c = this;
             try {
@@ -148,7 +164,6 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
                         NotificationManager notificationMgr = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
                         Intent intent = new Intent(c, FormDownloadList.class);
                         intent.putExtra("SurveyList", value);
-                        intent.putExtra("Reschedule", true);
 
                         PendingIntent pIntent = PendingIntent.getActivity(c, 0, intent, 0);
 
@@ -159,10 +174,9 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
                                 .setSmallIcon(android.R.drawable.stat_notify_more)
                                 .setContentIntent(pIntent)
                                 .build();
-                        notification.flags |= Notification.FLAG_AUTO_CANCEL;
                         notification.defaults |= Notification.DEFAULT_SOUND;
 
-                        notificationMgr.notify(0, notification);
+                        notificationMgr.notify(notificationId, notification);
                     }
                 });
             } catch (Exception e) {
@@ -170,4 +184,21 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
             }
         }
     }
+
+    /**
+     * Cancel the pending notification.
+     * @param c Context to be passed
+     */
+    public static void cancelNotification(final Context c) {
+        isDownloaded = false;
+        new Thread() {
+            @Override
+            public void run() {
+                NotificationManager notificationMgr = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+                notificationMgr.cancel(notificationId);
+            }
+        }.start();
+    }
+
+
 }

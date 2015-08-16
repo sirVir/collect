@@ -263,10 +263,7 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
             formListDownloadingComplete(surveyList, true);
         }
 
-        if (intent.hasExtra("Reschedule")) {
-            SurveyCheckService.scheduleRepeat(this);
-        }
-
+        SurveyCheckService.cancelNotification(this);
     }
 
 

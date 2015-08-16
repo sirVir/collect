@@ -165,7 +165,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
           if (! newValue.toString().equals(((ListPreference) preference).getValue()))
               new Thread(new Runnable() {
                   public void run() {
-                      SurveyCheckService.scheduleRepeat(ctx);}
+                      SurveyCheckService.refreshRepeat(ctx, true);}
               }).start();
         if (newValue.toString().equals("disabled"))
             mAutoPullFrequency.setEnabled(false);
@@ -182,7 +182,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
               if (! newValue.toString().equals(((ListPreference) preference).getValue()))
               new Thread(new Runnable() {
                   public void run() {
-                      SurveyCheckService.scheduleRepeat(ctx);
+                      SurveyCheckService.refreshRepeat(ctx, true);
                   }
               }).start();
               return true;
