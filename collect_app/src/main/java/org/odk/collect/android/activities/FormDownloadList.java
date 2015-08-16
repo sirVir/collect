@@ -123,6 +123,15 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
     @SuppressWarnings("unchecked")
     @Override
     public void onCreate(Bundle savedInstanceState) {
+
+        // must be at the beginning of any activity that can be called from an external intent
+        try {
+            Collect.createODKDirs();
+        } catch (RuntimeException e) {
+            createErrorDialog(e.getMessage(), EXIT);
+            return;
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.remote_file_manage_list);
         setTitle(getString(R.string.app_name) + " > " + getString(R.string.get_forms));
@@ -256,8 +265,8 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
         getListView().setItemsCanFocus(false);
         setListAdapter(mFormListAdapter);
 
+        // Intent added to avoid re-downloading of the survey content
         Intent intent = getIntent();
-
         if (intent.getSerializableExtra("SurveyList") != null) {
             HashMap<String, FormDetails> surveyList = (HashMap<String, FormDetails>) intent.getSerializableExtra("SurveyList");
             formListDownloadingComplete(surveyList, true);
@@ -710,6 +719,39 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
         }
 
         createAlertDialog(getString(R.string.download_forms_result), b.toString().trim(), EXIT);
+    }
+
+    /**
+     * Creates a dialog with the given message. Will exit the activity when the user preses "ok" if
+     * shouldExit is set to true.
+     *
+     * @param errorMsg
+     * @param shouldExit
+     */
+    private void createErrorDialog(String errorMsg, final boolean shouldExit) {
+
+        Collect.getInstance().getActivityLogger().logAction(this, "createErrorDialog", "show");
+
+        mAlertDialog = new AlertDialog.Builder(this).create();
+        mAlertDialog.setIcon(android.R.drawable.ic_dialog_info);
+        mAlertDialog.setMessage(errorMsg);
+        DialogInterface.OnClickListener errorListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int i) {
+                switch (i) {
+                    case DialogInterface.BUTTON_POSITIVE:
+                        Collect.getInstance().getActivityLogger().logAction(this, "createErrorDialog",
+                                shouldExit ? "exitApplication" : "OK");
+                        if (shouldExit) {
+                            finish();
+                        }
+                        break;
+                }
+            }
+        };
+        mAlertDialog.setCancelable(false);
+        mAlertDialog.setButton(getString(R.string.ok), errorListener);
+        mAlertDialog.show();
     }
 
 }
