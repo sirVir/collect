@@ -94,7 +94,19 @@ public class GeoPointMapActivity extends FragmentActivity implements LocationLis
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
+<<<<<<< HEAD
         setContentView(R.layout.geopoint_layout);
+=======
+        try {
+            setContentView(R.layout.geopoint_layout);
+        } catch (NoClassDefFoundError e) {
+            e.printStackTrace();
+            Toast.makeText(getBaseContext(), getString(R.string.google_play_services_error_occured),
+                    Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+>>>>>>> e566a801a933e75080d0667bf94c89c37513412c
 
         Intent intent = getIntent();
 
@@ -113,10 +125,13 @@ public class GeoPointMapActivity extends FragmentActivity implements LocationLis
 
         /* Set up the map and the marker */
 		mMarkerOption = new MarkerOptions();
+<<<<<<< HEAD
 		mMap = ((SupportMapFragment) getSupportFragmentManager()
 				.findFragmentById(R.id.map)).getMap();
 		mMap.setOnMarkerDragListener(this);
 
+=======
+>>>>>>> e566a801a933e75080d0667bf94c89c37513412c
 
 		mLocationStatus = (TextView) findViewById(R.id.location_status);
 
@@ -124,11 +139,16 @@ public class GeoPointMapActivity extends FragmentActivity implements LocationLis
 		if (mLatLng != null){
 			mLocationStatus.setVisibility(View.GONE);
 			mMarkerOption.position(mLatLng);
+<<<<<<< HEAD
 			mMarker = mMap.addMarker(mMarkerOption);
 			mRefreshLocation = false; // just show this position; don't change it...
 			mMarker.setDraggable(mCaptureLocation);
 			mZoomed = true;
 			mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mLatLng, 16));
+=======
+			mRefreshLocation = false; // just show this position; don't change it...
+			mZoomed = true;
+>>>>>>> e566a801a933e75080d0667bf94c89c37513412c
 		}
 
         mCancelLocation = (Button) findViewById(R.id.cancel_location);
@@ -193,6 +213,7 @@ public class GeoPointMapActivity extends FragmentActivity implements LocationLis
 	    if (mCaptureLocation){
 	        mAcceptLocation.setOnClickListener(new OnClickListener() {
 
+<<<<<<< HEAD
 	            @Override
 	            public void onClick(View v) {
 	                Collect.getInstance().getActivityLogger().logInstanceAction(this, "acceptLocation", "OK");
@@ -200,6 +221,14 @@ public class GeoPointMapActivity extends FragmentActivity implements LocationLis
 	            }
 	        });
 	        mMap.setOnMapLongClickListener(this);
+=======
+				@Override
+				public void onClick(View v) {
+					Collect.getInstance().getActivityLogger().logInstanceAction(this, "acceptLocation", "OK");
+					returnLocation();
+				}
+			});
+>>>>>>> e566a801a933e75080d0667bf94c89c37513412c
         }else{
         	mAcceptLocation.setVisibility(View.GONE);
         }
@@ -241,9 +270,15 @@ public class GeoPointMapActivity extends FragmentActivity implements LocationLis
      					16));
      		}
      	});
+<<<<<<< HEAD
      	mShowLocation.setClickable(mMarker != null);
 
 
+=======
+
+        // not clickable until we have a marker set....
+     	mShowLocation.setClickable(false);
+>>>>>>> e566a801a933e75080d0667bf94c89c37513412c
     }
 
     private void stopGeolocating() {
@@ -304,7 +339,40 @@ public class GeoPointMapActivity extends FragmentActivity implements LocationLis
     @Override
     protected void onResume() {
         super.onResume();
+<<<<<<< HEAD
         if ( mRefreshLocation ) {
+=======
+
+		if ( mMap == null ) {
+			mMap = ((SupportMapFragment) getSupportFragmentManager()
+					.findFragmentById(R.id.map)).getMap();
+            if ( mMap == null ) {
+                Toast.makeText(getBaseContext(), getString(R.string.google_play_services_error_occured),
+                        Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
+
+            // possibly enable clear value action...
+            if (mCaptureLocation) {
+                mMap.setOnMarkerDragListener(this);
+                mMap.setOnMapLongClickListener(this);
+            }
+
+			/*Zoom only if there's a previous location*/
+			if (mLatLng != null){
+				mMarkerOption.position(mLatLng);
+				mMarker = mMap.addMarker(mMarkerOption);
+				mMarker.setDraggable(mCaptureLocation);
+                mZoomed = true;
+				mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mLatLng, 16));
+			}
+
+            mShowLocation.setClickable(mMarker != null);
+        }
+
+		if ( mRefreshLocation ) {
+>>>>>>> e566a801a933e75080d0667bf94c89c37513412c
 			mLocationStatus.setVisibility(View.VISIBLE);
 	        if (mGPSOn) {
 				mLocationManager.requestLocationUpdates(

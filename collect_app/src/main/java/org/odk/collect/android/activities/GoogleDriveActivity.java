@@ -75,8 +75,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
+<<<<<<< HEAD
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+=======
+import com.google.android.gms.common.GooglePlayServicesClient.OnConnectionFailedListener;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+>>>>>>> e566a801a933e75080d0667bf94c89c37513412c
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
@@ -87,7 +92,11 @@ import com.google.api.services.drive.Drive.Files;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.ParentList;
 
+<<<<<<< HEAD
 public class GoogleDriveActivity extends ListActivity implements GoogleApiClient.OnConnectionFailedListener,
+=======
+public class GoogleDriveActivity extends ListActivity implements OnConnectionFailedListener,
+>>>>>>> e566a801a933e75080d0667bf94c89c37513412c
         TaskListener, GoogleDriveFormDownloadListener {
 
     private final static int PROGRESS_DIALOG = 1;

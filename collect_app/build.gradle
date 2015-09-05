@@ -1,49 +1,64 @@
 /**************************************************************************************************
-                                        GRADLE CONFIG
+ GRADLE CONFIG
  *************************************************************************************************/
+
+if ((new File(gradle.local)).exists()) { // TODO: This is very strange
+    def localPath = '../' + gradle.local // Shouldn't need to append ../ not consistent
+    apply from: localPath
+} else {
+    apply from: gradle.remote
+}
+
+applicationScripts.each {
+    apply from: it
+}
 
 apply plugin: 'com.android.application'
 
 android {
-    buildToolsVersion "23"
-    compileSdkVersion "Google Inc.:Google APIs:22"
+    // The following are set in the common.gradle file
+    compileSdkVersion("Google Inc.:Google APIs:19")
+    buildToolsVersion("22.0.1")
 
     defaultConfig {
-        applicationId "org.odk.collect"
-        minSdkVersion 9
-        targetSdkVersion 22
+        applicationId("org.odk.collect.android")
+        minSdkVersion(9)
+        targetSdkVersion(22)
+        versionCode(1052)
+        versionName("1.4.7")
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled(minify)
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+        snapshot {
+            // Build type for snapshots
+        }
+        debug {
+            testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
         }
     }
 
-    packagingOptions {
-        pickFirst 'META-INF/DEPENDENCIES'
-        pickFirst 'META-INF/LICENSE'
-        pickFirst 'META-INF/LICENSE.txt'
-        pickFirst 'META-INF/NOTICE'
-        pickFirst 'META-INF/NOTICE.txt'
-    }
-
-    dexOptions {
-        preDexLibraries = false
+    packagingOptions { // Pick first occurrence of any files that cause conflicts, as defined in common.gradle
+        packageList.each {
+            pickFirst it
+        }
     }
 }
 
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
-    compile ('com.google.android.gms:play-services-gcm:7.5.0')
-            {
-                exclude module: 'support-v4'
-            }
-    compile ('com.google.android.gms:play-services-maps:7.5.0')
-            {
-                exclude module: 'support-v4'
-            }
     compile 'com.android.support:appcompat-v7:22.2.1'
 
+    if (playServicesPath.exists() && gradle.useLocal) { // Local project is favoured
+        compile project(playServicesName)
+    } else {
+        releaseCompile(group: groupId, name: playServicesArtifactName, version: playServicesRelease, ext: 'aar')
+        snapshotCompile(group: groupId, name: playServicesArtifactName, version: playServicesSnapshot, ext: 'aar')
+        debugCompile(group: groupId, name: playServicesArtifactName, version: playServicesSnapshot, ext: 'aar')
+    }
+
+    testCompile 'junit:junit:4.12'
 }

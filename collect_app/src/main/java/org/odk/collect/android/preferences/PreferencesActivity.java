@@ -16,6 +16,7 @@ package org.odk.collect.android.preferences;
 
 import java.util.ArrayList;
 
+import org.javarosa.core.services.IPropertyManager;
 import org.odk.collect.android.R;
 import org.odk.collect.android.logic.FormController;
 import org.odk.collect.android.logic.PropertyManager;
@@ -106,13 +107,8 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
   public static final String KEY_AUTOSEND_NETWORK = "autosend_network";
   public static final String KEY_AUTOPULL_NEW = "autopull_new";
   public static final String KEY_AUTOPULL_FREQUENCY = "autopull_frequency";
-
-
   public static final String KEY_NAVIGATION = "navigation";
   public static final String KEY_CONSTRAINT_BEHAVIOR = "constraint_behavior";
-
-
-
 
   private PreferenceScreen mSplashPathPreference;
 
@@ -121,7 +117,6 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
   private ListPreference mNavigationPreference;
   private ListPreference mConstraintBehaviorPreference;
 
-  private PreferenceCategory mAutosendCategory;
   private CheckBoxPreference mAutosendWifiPreference;
   private CheckBoxPreference mAutosendNetworkPreference;
   private ListPreference mAutoPullPreference;
@@ -148,12 +143,12 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
     final boolean adminMode = getIntent().getBooleanExtra(INTENT_KEY_ADMIN_MODE, false);
 
     SharedPreferences adminPreferences = getSharedPreferences(
-            AdminPreferencesActivity.ADMIN_PREFERENCES, 0);
+        AdminPreferencesActivity.ADMIN_PREFERENCES, 0);
 
     // assign all the preferences in advance because changing one often
     // affects another
     // also avoids npe
-    mAutosendCategory = (PreferenceCategory) findPreference(getString(R.string.autosend));
+    PreferenceCategory autosendCategory = (PreferenceCategory) findPreference(getString(R.string.autosend));
     mAutosendWifiPreference = (CheckBoxPreference) findPreference(KEY_AUTOSEND_WIFI);
     mAutosendNetworkPreference = (CheckBoxPreference) findPreference(KEY_AUTOSEND_NETWORK);
     mAutoPullPreference = (ListPreference) findPreference(KEY_AUTOPULL_NEW);
@@ -208,15 +203,15 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
     mProtocolSettings = (PreferenceScreen) findPreference(KEY_PROTOCOL_SETTINGS);
 
     boolean autosendWifiAvailable = adminPreferences.getBoolean(
-            AdminPreferencesActivity.KEY_AUTOSEND_WIFI, true);
+        AdminPreferencesActivity.KEY_AUTOSEND_WIFI, true);
     if (!(autosendWifiAvailable || adminMode)) {
-      mAutosendCategory.removePreference(mAutosendWifiPreference);
+      autosendCategory.removePreference(mAutosendWifiPreference);
     }
 
     boolean autosendNetworkAvailable = adminPreferences.getBoolean(
-            AdminPreferencesActivity.KEY_AUTOSEND_NETWORK, true);
+        AdminPreferencesActivity.KEY_AUTOSEND_NETWORK, true);
     if (!(autosendNetworkAvailable || adminMode)) {
-      mAutosendCategory.removePreference(mAutosendNetworkPreference);
+      autosendCategory.removePreference(mAutosendNetworkPreference);
     }
 
     boolean autoPullAvailable = adminPreferences.getBoolean(
@@ -232,274 +227,274 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
 
 
       if (!(autosendNetworkAvailable || autosendWifiAvailable || autoPullAvailable || autoPullFrequencyAvailable || adminMode)) {
-        getPreferenceScreen().removePreference(mAutosendCategory);
+        getPreferenceScreen().removePreference(autosendCategory);
       }
 
-      mProtocolPreference = (ListPreference) findPreference(KEY_PROTOCOL);
-      mProtocolPreference.setSummary(mProtocolPreference.getEntry());
-      Intent prefIntent = null;
+    mProtocolPreference = (ListPreference) findPreference(KEY_PROTOCOL);
+    mProtocolPreference.setSummary(mProtocolPreference.getEntry());
+    Intent prefIntent = null;
 
-      if (mProtocolPreference.getValue().equals(getString(R.string.protocol_odk_default))) {
-        setDefaultAggregatePaths();
-        prefIntent = new Intent(this, AggregatePreferencesActivity.class);
-      } else if (mProtocolPreference.getValue().equals(
-              getString(R.string.protocol_google_maps_engine))) {
-        prefIntent = new Intent(this, GMEPreferencesActivity.class);
-      } else {
-        // other
-        prefIntent = new Intent(this, OtherPreferencesActivity.class);
-      }
-      prefIntent.putExtra(INTENT_KEY_ADMIN_MODE, adminMode);
-      mProtocolSettings.setIntent(prefIntent);
+    if (mProtocolPreference.getValue().equals(getString(R.string.protocol_odk_default))) {
+      setDefaultAggregatePaths();
+      prefIntent = new Intent(this, AggregatePreferencesActivity.class);
+    } else if (mProtocolPreference.getValue().equals(
+        getString(R.string.protocol_google_maps_engine))) {
+      prefIntent = new Intent(this, GMEPreferencesActivity.class);
+    } else {
+      // other
+      prefIntent = new Intent(this, OtherPreferencesActivity.class);
+    }
+    prefIntent.putExtra(INTENT_KEY_ADMIN_MODE, adminMode);
+    mProtocolSettings.setIntent(prefIntent);
 
-      mProtocolPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+    mProtocolPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object newValue) {
-          String oldValue = ((ListPreference) preference).getValue();
-          int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
-          String entry = (String) ((ListPreference) preference).getEntries()[index];
-          String value = (String) ((ListPreference) preference).getEntryValues()[index];
-          ((ListPreference) preference).setSummary(entry);
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
+        String oldValue = ((ListPreference) preference).getValue();
+        int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
+        String entry = (String) ((ListPreference) preference).getEntries()[index];
+        String value = (String) ((ListPreference) preference).getEntryValues()[index];
+        ((ListPreference) preference).setSummary(entry);
 
-          Intent prefIntent = null;
-          if (value.equals(getString(R.string.protocol_odk_default))) {
-            setDefaultAggregatePaths();
-            prefIntent = new Intent(PreferencesActivity.this, AggregatePreferencesActivity.class);
-          } else if (value.equals(getString(R.string.protocol_google_maps_engine))) {
-            prefIntent = new Intent(PreferencesActivity.this, GMEPreferencesActivity.class);
-          } else {
-            // other
-            prefIntent = new Intent(PreferencesActivity.this, OtherPreferencesActivity.class);
-          }
-          prefIntent.putExtra(INTENT_KEY_ADMIN_MODE, adminMode);
-          mProtocolSettings.setIntent(prefIntent);
-
-          if (!((String) newValue).equals(oldValue)) {
-            startActivity(prefIntent);
-          }
-
-          return true;
+        Intent prefIntent = null;
+        if (value.equals(getString(R.string.protocol_odk_default))) {
+          setDefaultAggregatePaths();
+          prefIntent = new Intent(PreferencesActivity.this, AggregatePreferencesActivity.class);
+        } else if (value.equals(getString(R.string.protocol_google_maps_engine))) {
+          prefIntent = new Intent(PreferencesActivity.this, GMEPreferencesActivity.class);
+        } else {
+          // other
+          prefIntent = new Intent(PreferencesActivity.this, OtherPreferencesActivity.class);
         }
-      });
+        prefIntent.putExtra(INTENT_KEY_ADMIN_MODE, adminMode);
+        mProtocolSettings.setIntent(prefIntent);
 
-      boolean changeProtocol = adminPreferences.getBoolean(
-              AdminPreferencesActivity.KEY_CHANGE_SERVER, true);
-      if (!(changeProtocol || adminMode)) {
-        serverCategory.removePreference(mProtocolPreference);
+        if (!((String) newValue).equals(oldValue)) {
+          startActivity(prefIntent);
+        }
+
+        return true;
       }
-      boolean changeProtocolSettings = adminPreferences.getBoolean(
-              AdminPreferencesActivity.KEY_CHANGE_PROTOCOL_SETTINGS, true);
-      if (!(changeProtocolSettings || adminMode)) {
-        serverCategory.removePreference(mProtocolSettings);
+    });
+
+    boolean changeProtocol = adminPreferences.getBoolean(
+        AdminPreferencesActivity.KEY_CHANGE_SERVER, true);
+    if (!(changeProtocol || adminMode)) {
+      serverCategory.removePreference(mProtocolPreference);
+    }
+    boolean changeProtocolSettings = adminPreferences.getBoolean(
+        AdminPreferencesActivity.KEY_CHANGE_PROTOCOL_SETTINGS, true);
+    if (!(changeProtocolSettings || adminMode)) {
+      serverCategory.removePreference(mProtocolSettings);
+    }
+
+    // get list of google accounts
+    final Account[] accounts = AccountManager.get(getApplicationContext()).getAccountsByType(
+        "com.google");
+    ArrayList<String> accountEntries = new ArrayList<String>();
+    ArrayList<String> accountValues = new ArrayList<String>();
+
+    for (int i = 0; i < accounts.length; i++) {
+      accountEntries.add(accounts[i].name);
+      accountValues.add(accounts[i].name);
+    }
+    accountEntries.add(getString(R.string.no_account));
+    accountValues.add("");
+
+    mSelectedGoogleAccountPreference.setEntries(accountEntries.toArray(new String[accountEntries
+        .size()]));
+    mSelectedGoogleAccountPreference.setEntryValues(accountValues.toArray(new String[accountValues
+        .size()]));
+    mSelectedGoogleAccountPreference
+        .setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+
+          @Override
+          public boolean onPreferenceChange(Preference preference, Object newValue) {
+            int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
+            String value = (String) ((ListPreference) preference).getEntryValues()[index];
+            ((ListPreference) preference).setSummary(value);
+            return true;
+          }
+        });
+    mSelectedGoogleAccountPreference.setSummary(mSelectedGoogleAccountPreference.getValue());
+
+    boolean googleAccountAvailable = adminPreferences.getBoolean(
+        AdminPreferencesActivity.KEY_CHANGE_GOOGLE_ACCOUNT, true);
+    if (!(googleAccountAvailable || adminMode)) {
+      serverCategory.removePreference(mSelectedGoogleAccountPreference);
+    }
+
+    mUsernamePreference.setOnPreferenceChangeListener(this);
+    mUsernamePreference.setSummary(mUsernamePreference.getText());
+    mUsernamePreference.getEditText().setFilters(new InputFilter[] { getReturnFilter() });
+
+    boolean usernameAvailable = adminPreferences.getBoolean(
+        AdminPreferencesActivity.KEY_CHANGE_USERNAME, true);
+    if (!(usernameAvailable || adminMode)) {
+      serverCategory.removePreference(mUsernamePreference);
+    }
+
+    mPasswordPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
+        String pw = newValue.toString();
+
+        if (pw.length() > 0) {
+          mPasswordPreference.setSummary("********");
+        } else {
+          mPasswordPreference.setSummary("");
+        }
+        return true;
+      }
+    });
+    if (mPasswordPreference.getText() != null && mPasswordPreference.getText().length() > 0) {
+      mPasswordPreference.setSummary("********");
+    }
+    mPasswordPreference.getEditText().setFilters(new InputFilter[] { getReturnFilter() });
+
+    boolean passwordAvailable = adminPreferences.getBoolean(
+        AdminPreferencesActivity.KEY_CHANGE_PASSWORD, true);
+    if (!(passwordAvailable || adminMode)) {
+      serverCategory.removePreference(mPasswordPreference);
+    }
+
+    boolean navigationAvailable = adminPreferences.getBoolean(
+        AdminPreferencesActivity.KEY_NAVIGATION, true);
+    mNavigationPreference.setSummary(mNavigationPreference.getEntry());
+    mNavigationPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
+        int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
+        String entry = (String) ((ListPreference) preference).getEntries()[index];
+        ((ListPreference) preference).setSummary(entry);
+        return true;
+      }
+    });
+    if (!(navigationAvailable || adminMode)) {
+      clientCategory.removePreference(mNavigationPreference);
+    }
+
+    boolean constraintBehaviorAvailable = adminPreferences.getBoolean(
+        AdminPreferencesActivity.KEY_CONSTRAINT_BEHAVIOR, true);
+    mConstraintBehaviorPreference.setSummary(mConstraintBehaviorPreference.getEntry());
+    mConstraintBehaviorPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
+        int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
+        String entry = (String) ((ListPreference) preference).getEntries()[index];
+        ((ListPreference) preference).setSummary(entry);
+        return true;
+      }
+    });
+    if (!(constraintBehaviorAvailable || adminMode)) {
+      clientCategory.removePreference(mConstraintBehaviorPreference);
+    }
+
+    boolean fontAvailable = adminPreferences.getBoolean(
+        AdminPreferencesActivity.KEY_CHANGE_FONT_SIZE, true);
+    mFontSizePreference.setSummary(mFontSizePreference.getEntry());
+    mFontSizePreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
+        int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
+        String entry = (String) ((ListPreference) preference).getEntries()[index];
+        ((ListPreference) preference).setSummary(entry);
+        return true;
+      }
+    });
+    if (!(fontAvailable || adminMode)) {
+      clientCategory.removePreference(mFontSizePreference);
+    }
+
+    boolean defaultAvailable = adminPreferences.getBoolean(
+        AdminPreferencesActivity.KEY_DEFAULT_TO_FINALIZED, true);
+
+    if (!(defaultAvailable || adminMode)) {
+      clientCategory.removePreference(defaultFinalized);
+    }
+
+    boolean deleteAfterAvailable = adminPreferences.getBoolean(
+        AdminPreferencesActivity.KEY_DELETE_AFTER_SEND, true);
+    if (!(deleteAfterAvailable || adminMode)) {
+      clientCategory.removePreference(deleteAfterSend);
+    }
+
+    boolean resolutionAvailable = adminPreferences.getBoolean(
+        AdminPreferencesActivity.KEY_HIGH_RESOLUTION, true);
+
+    Preference highResolution = findPreference(KEY_HIGH_RESOLUTION);
+    if (!(resolutionAvailable || adminMode)) {
+      clientCategory.removePreference(highResolution);
+    }
+
+    mSplashPathPreference.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+
+      private void launchImageChooser() {
+        Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+        i.setType("image/*");
+        startActivityForResult(i, PreferencesActivity.IMAGE_CHOOSER);
       }
 
-      // get list of google accounts
-      final Account[] accounts = AccountManager.get(getApplicationContext()).getAccountsByType(
-              "com.google");
-      ArrayList<String> accountEntries = new ArrayList<String>();
-      ArrayList<String> accountValues = new ArrayList<String>();
+      @Override
+      public boolean onPreferenceClick(Preference preference) {
+        // if you have a value, you can clear it or select new.
+        CharSequence cs = mSplashPathPreference.getSummary();
+        if (cs != null && cs.toString().contains("/")) {
 
-      for (int i = 0; i < accounts.length; i++) {
-        accountEntries.add(accounts[i].name);
-        accountValues.add(accounts[i].name);
-      }
-      accountEntries.add(getString(R.string.no_account));
-      accountValues.add("");
+          final CharSequence[] items = { getString(R.string.select_another_image),
+              getString(R.string.use_odk_default) };
 
-      mSelectedGoogleAccountPreference.setEntries(accountEntries.toArray(new String[accountEntries
-              .size()]));
-      mSelectedGoogleAccountPreference.setEntryValues(accountValues.toArray(new String[accountValues
-              .size()]));
-      mSelectedGoogleAccountPreference
-              .setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-
+          AlertDialog.Builder builder = new AlertDialog.Builder(PreferencesActivity.this);
+          builder.setTitle(getString(R.string.change_splash_path));
+          builder.setNeutralButton(getString(R.string.cancel),
+              new DialogInterface.OnClickListener() {
                 @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                  int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
-                  String value = (String) ((ListPreference) preference).getEntryValues()[index];
-                  ((ListPreference) preference).setSummary(value);
-                  return true;
+                public void onClick(DialogInterface dialog, int id) {
+                  dialog.dismiss();
                 }
               });
-      mSelectedGoogleAccountPreference.setSummary(mSelectedGoogleAccountPreference.getValue());
-
-      boolean googleAccountAvailable = adminPreferences.getBoolean(
-              AdminPreferencesActivity.KEY_CHANGE_GOOGLE_ACCOUNT, true);
-      if (!(googleAccountAvailable || adminMode)) {
-        serverCategory.removePreference(mSelectedGoogleAccountPreference);
-      }
-
-      mUsernamePreference.setOnPreferenceChangeListener(this);
-      mUsernamePreference.setSummary(mUsernamePreference.getText());
-      mUsernamePreference.getEditText().setFilters(new InputFilter[]{getReturnFilter()});
-
-      boolean usernameAvailable = adminPreferences.getBoolean(
-              AdminPreferencesActivity.KEY_CHANGE_USERNAME, true);
-      if (!(usernameAvailable || adminMode)) {
-        serverCategory.removePreference(mUsernamePreference);
-      }
-
-      mPasswordPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object newValue) {
-          String pw = newValue.toString();
-
-          if (pw.length() > 0) {
-            mPasswordPreference.setSummary("********");
-          } else {
-            mPasswordPreference.setSummary("");
-          }
-          return true;
-        }
-      });
-      if (mPasswordPreference.getText() != null && mPasswordPreference.getText().length() > 0) {
-        mPasswordPreference.setSummary("********");
-      }
-      mPasswordPreference.getEditText().setFilters(new InputFilter[]{getReturnFilter()});
-
-      boolean passwordAvailable = adminPreferences.getBoolean(
-              AdminPreferencesActivity.KEY_CHANGE_PASSWORD, true);
-      if (!(passwordAvailable || adminMode)) {
-        serverCategory.removePreference(mPasswordPreference);
-      }
-
-      boolean navigationAvailable = adminPreferences.getBoolean(
-              AdminPreferencesActivity.KEY_NAVIGATION, true);
-      mNavigationPreference.setSummary(mNavigationPreference.getEntry());
-      mNavigationPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object newValue) {
-          int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
-          String entry = (String) ((ListPreference) preference).getEntries()[index];
-          ((ListPreference) preference).setSummary(entry);
-          return true;
-        }
-      });
-      if (!(navigationAvailable || adminMode)) {
-        clientCategory.removePreference(mNavigationPreference);
-      }
-
-      boolean constraintBehaviorAvailable = adminPreferences.getBoolean(
-              AdminPreferencesActivity.KEY_CONSTRAINT_BEHAVIOR, true);
-      mConstraintBehaviorPreference.setSummary(mConstraintBehaviorPreference.getEntry());
-      mConstraintBehaviorPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object newValue) {
-          int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
-          String entry = (String) ((ListPreference) preference).getEntries()[index];
-          ((ListPreference) preference).setSummary(entry);
-          return true;
-        }
-      });
-      if (!(constraintBehaviorAvailable || adminMode)) {
-        clientCategory.removePreference(mConstraintBehaviorPreference);
-      }
-
-      boolean fontAvailable = adminPreferences.getBoolean(
-              AdminPreferencesActivity.KEY_CHANGE_FONT_SIZE, true);
-      mFontSizePreference.setSummary(mFontSizePreference.getEntry());
-      mFontSizePreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object newValue) {
-          int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
-          String entry = (String) ((ListPreference) preference).getEntries()[index];
-          ((ListPreference) preference).setSummary(entry);
-          return true;
-        }
-      });
-      if (!(fontAvailable || adminMode)) {
-        clientCategory.removePreference(mFontSizePreference);
-      }
-
-      boolean defaultAvailable = adminPreferences.getBoolean(
-              AdminPreferencesActivity.KEY_DEFAULT_TO_FINALIZED, true);
-
-      if (!(defaultAvailable || adminMode)) {
-        clientCategory.removePreference(defaultFinalized);
-      }
-
-      boolean deleteAfterAvailable = adminPreferences.getBoolean(
-              AdminPreferencesActivity.KEY_DELETE_AFTER_SEND, true);
-      if (!(deleteAfterAvailable || adminMode)) {
-        clientCategory.removePreference(deleteAfterSend);
-      }
-
-      boolean resolutionAvailable = adminPreferences.getBoolean(
-              AdminPreferencesActivity.KEY_HIGH_RESOLUTION, true);
-
-      Preference highResolution = findPreference(KEY_HIGH_RESOLUTION);
-      if (!(resolutionAvailable || adminMode)) {
-        clientCategory.removePreference(highResolution);
-      }
-
-      mSplashPathPreference.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-
-        private void launchImageChooser() {
-          Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-          i.setType("image/*");
-          startActivityForResult(i, PreferencesActivity.IMAGE_CHOOSER);
-        }
-
-        @Override
-        public boolean onPreferenceClick(Preference preference) {
-          // if you have a value, you can clear it or select new.
-          CharSequence cs = mSplashPathPreference.getSummary();
-          if (cs != null && cs.toString().contains("/")) {
-
-            final CharSequence[] items = {getString(R.string.select_another_image),
-                    getString(R.string.use_odk_default)};
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(PreferencesActivity.this);
-            builder.setTitle(getString(R.string.change_splash_path));
-            builder.setNeutralButton(getString(R.string.cancel),
-                    new DialogInterface.OnClickListener() {
-                      @Override
-                      public void onClick(DialogInterface dialog, int id) {
-                        dialog.dismiss();
-                      }
-                    });
-            builder.setItems(items, new DialogInterface.OnClickListener() {
-              @Override
-              public void onClick(DialogInterface dialog, int item) {
-                if (items[item].equals(getString(R.string.select_another_image))) {
-                  launchImageChooser();
-                } else {
-                  setSplashPath(getString(R.string.default_splash_path));
-                }
+          builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int item) {
+              if (items[item].equals(getString(R.string.select_another_image))) {
+                launchImageChooser();
+              } else {
+                setSplashPath(getString(R.string.default_splash_path));
               }
-            });
-            AlertDialog alert = builder.create();
-            alert.show();
+            }
+          });
+          AlertDialog alert = builder.create();
+          alert.show();
 
-          } else {
-            launchImageChooser();
-          }
-
-          return true;
+        } else {
+          launchImageChooser();
         }
-      });
 
-      mSplashPathPreference.setSummary(mSplashPathPreference.getSharedPreferences().getString(
-              KEY_SPLASH_PATH, getString(R.string.default_splash_path)));
-
-      boolean showSplashAvailable = adminPreferences.getBoolean(
-              AdminPreferencesActivity.KEY_SHOW_SPLASH_SCREEN, true);
-
-      CheckBoxPreference showSplashPreference = (CheckBoxPreference) findPreference(KEY_SHOW_SPLASH);
-
-      if (!(showSplashAvailable || adminMode)) {
-        clientCategory.removePreference(showSplashPreference);
-        clientCategory.removePreference(mSplashPathPreference);
+        return true;
       }
+    });
 
-      if (!(fontAvailable || defaultAvailable || showSplashAvailable || navigationAvailable
-              || adminMode || resolutionAvailable)) {
-        getPreferenceScreen().removePreference(clientCategory);
-      }
+    mSplashPathPreference.setSummary(mSplashPathPreference.getSharedPreferences().getString(
+        KEY_SPLASH_PATH, getString(R.string.default_splash_path)));
+
+    boolean showSplashAvailable = adminPreferences.getBoolean(
+        AdminPreferencesActivity.KEY_SHOW_SPLASH_SCREEN, true);
+
+    CheckBoxPreference showSplashPreference = (CheckBoxPreference) findPreference(KEY_SHOW_SPLASH);
+
+    if (!(showSplashAvailable || adminMode)) {
+      clientCategory.removePreference(showSplashPreference);
+      clientCategory.removePreference(mSplashPathPreference);
+    }
+
+    if (!(fontAvailable || defaultAvailable || showSplashAvailable || navigationAvailable
+        || adminMode || resolutionAvailable)) {
+      getPreferenceScreen().removePreference(clientCategory);
+    }
 
     }
   }
@@ -510,7 +505,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
 
     // the property manager should be re-assigned, as properties
     // may have changed.
-    PropertyManager mgr = new PropertyManager(this);
+    IPropertyManager mgr = new PropertyManager(this);
     FormController.initializeJavaRosa(mgr);
   }
 
