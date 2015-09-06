@@ -128,15 +128,14 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
                             //set required network state, this line is optional
                     .setRequiresCharging(false);
 
-            switch (choosen) {
-                case "connected":
-                    periodic.setRequiredNetwork(Task.NETWORK_STATE_CONNECTED);
-                    break;
-                case "unmetered":
-                    periodic.setRequiredNetwork(Task.NETWORK_STATE_UNMETERED);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unsupported scheduling command");
+            if (choosen.equals("connected")) {
+                periodic.setRequiredNetwork(Task.NETWORK_STATE_CONNECTED);
+
+            } else if (choosen.equals("unmetered")) {
+                periodic.setRequiredNetwork(Task.NETWORK_STATE_UNMETERED);
+
+            } else {
+                throw new IllegalArgumentException("Unsupported scheduling command");
             }
 
             PeriodicTask task = periodic.build();

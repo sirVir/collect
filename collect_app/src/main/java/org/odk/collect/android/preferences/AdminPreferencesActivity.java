@@ -97,8 +97,8 @@ public class AdminPreferencesActivity extends PreferenceActivity {
     private static final int SAVE_PREFS_MENU = Menu.FIRST;
 
 
-    private CheckBoxPreference mAutoPullPreference;private CheckBoxPreference mAutoPullPreference;
-    private CheckBoxPreference mAutoPullFrequency;private CheckBoxPreference mAutoPullFrequency;
+    private CheckBoxPreference mAutoPullPreference;
+    private CheckBoxPreference mAutoPullFrequency;
 
 
     @Override
@@ -114,9 +114,9 @@ public class AdminPreferencesActivity extends PreferenceActivity {
         addPreferencesFromResource(R.xml.admin_preferences);
 
 
-        mAutoPullPreference = (CheckBoxPreference) findPreference(KEY_AUTOPULL_NEW);mAutoPullPreference = (CheckBoxPreference) findPreference(KEY_AUTOPULL_NEW);
+        mAutoPullPreference = (CheckBoxPreference) findPreference(KEY_AUTOPULL_NEW);
 
-        mAutoPullFrequency = (CheckBoxPreference) findPreference(KEY_AUTOPULL_FREQUENCY);mAutoPullFrequency = (CheckBoxPreference) findPreference(KEY_AUTOPULL_FREQUENCY);
+        mAutoPullFrequency = (CheckBoxPreference) findPreference(KEY_AUTOPULL_FREQUENCY);
 
 
         ListPreference mFormProcessingLogicPreference = (ListPreference) findPreference(KEY_FORM_PROCESSING_LOGIC);

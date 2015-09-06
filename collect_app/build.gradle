@@ -17,8 +17,8 @@ apply plugin: 'com.android.application'
 
 android {
     // The following are set in the common.gradle file
-    compileSdkVersion("Google Inc.:Google APIs:19")
-    buildToolsVersion("22.0.1")
+    compileSdkVersion "Google Inc.:Google APIs:22"
+    buildToolsVersion "23"
 
     defaultConfig {
         applicationId("org.odk.collect.android")
@@ -50,8 +50,20 @@ android {
 
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
-    compile 'com.android.support:appcompat-v7:22.2.1'
-
+    compile ('com.google.android.gms:play-services-gcm:7.5.0')
+            {
+                exclude module: 'support-v4'
+            }
+    compile ('com.google.android.gms:play-services-maps:7.5.0')
+            {
+                exclude module: 'play-services-base'
+                exclude module: 'support-v4'
+            }
+    compile ('com.android.support:appcompat-v7:22.2.1')
+            {
+                exclude module: 'support-v4'
+            }
+/*
     if (playServicesPath.exists() && gradle.useLocal) { // Local project is favoured
         compile project(playServicesName)
     } else {
@@ -59,6 +71,7 @@ dependencies {
         snapshotCompile(group: groupId, name: playServicesArtifactName, version: playServicesSnapshot, ext: 'aar')
         debugCompile(group: groupId, name: playServicesArtifactName, version: playServicesSnapshot, ext: 'aar')
     }
+    */
 
     testCompile 'junit:junit:4.12'
 }

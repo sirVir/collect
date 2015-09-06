@@ -18,21 +18,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
-<<<<<<< HEAD
-=======
+
 import android.database.Cursor;
->>>>>>> e566a801a933e75080d0667bf94c89c37513412c
 import org.odk.collect.android.R;
 import org.odk.collect.android.application.Collect;
 import org.odk.collect.android.listeners.FormDownloaderListener;
 import org.odk.collect.android.listeners.FormListDownloaderListener;
 import org.odk.collect.android.logic.FormDetails;
 import org.odk.collect.android.preferences.PreferencesActivity;
-<<<<<<< HEAD
 import org.odk.collect.android.services.SurveyCheckService;
-=======
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
->>>>>>> e566a801a933e75080d0667bf94c89c37513412c
 import org.odk.collect.android.tasks.DownloadFormListTask;
 import org.odk.collect.android.tasks.DownloadFormsTask;
 import org.odk.collect.android.utilities.CompatibilityUtils;
@@ -102,12 +97,10 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
     private static final String FORMDETAIL_KEY = "formdetailkey";
     private static final String FORMID_DISPLAY = "formiddisplay";
 
-<<<<<<< HEAD
-=======
+
     private static final String FORM_ID_KEY = "formid";
     private static final String FORM_VERSION_KEY = "formversion";
 
->>>>>>> e566a801a933e75080d0667bf94c89c37513412c
     private String mAlertMsg;
     private boolean mAlertShowing = false;
     private String mAlertTitle;
@@ -137,7 +130,6 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
     @SuppressWarnings("unchecked")
     @Override
     public void onCreate(Bundle savedInstanceState) {
-<<<<<<< HEAD
 
         // must be at the beginning of any activity that can be called from an external intent
         try {
@@ -151,11 +143,7 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
         setContentView(R.layout.remote_file_manage_list);
         setTitle(getString(R.string.app_name) + " > " + getString(R.string.get_forms));
 
-=======
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.remote_file_manage_list);
-        setTitle(getString(R.string.app_name) + " > " + getString(R.string.get_forms));
->>>>>>> e566a801a933e75080d0667bf94c89c37513412c
+
         mAlertMsg = getString(R.string.please_wait);
 
         // need white background before load
@@ -284,7 +272,6 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
         getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         getListView().setItemsCanFocus(false);
         setListAdapter(mFormListAdapter);
-<<<<<<< HEAD
 
         // Intent added to avoid re-downloading of the survey content
         Intent intent = getIntent();
@@ -294,8 +281,7 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
         }
 
         SurveyCheckService.cancelNotification(this);
-=======
->>>>>>> e566a801a933e75080d0667bf94c89c37513412c
+
     }
 
 
@@ -390,16 +376,11 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
      * @return
      */
     private int selectedItemCount() {
-<<<<<<< HEAD
-        int count = 0;
-        SparseBooleanArray sba = getListView().getCheckedItemPositions();
-        for (int i = 0; i < getListView().getCount(); i++) {
-=======
+
         ListView lv = getListView();
         int count = 0;
         SparseBooleanArray sba = lv.getCheckedItemPositions();
         for (int i = 0; i < lv.getCount(); i++) {
->>>>>>> e566a801a933e75080d0667bf94c89c37513412c
             if (sba.get(i, false)) {
                 count++;
             }
@@ -608,8 +589,6 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
         super.onPause();
     }
 
-<<<<<<< HEAD
-=======
     /**
      * Determines if a local form on the device is superseded by a given version (of the same form presumably available
      * on the server).
@@ -672,7 +651,6 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
             }
         }
     }
->>>>>>> e566a801a933e75080d0667bf94c89c37513412c
 
     /**
      * Called when the form list has finished downloading. results will either contain a set of
@@ -680,19 +658,13 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
      *
      * @param result
      */
-<<<<<<< HEAD
     public void formListDownloadingComplete(HashMap<String, FormDetails> result, Boolean silent) {
         if (!silent) {
             dismissDialog(PROGRESS_DIALOG);
         mDownloadFormListTask.setDownloaderListener(null);
         mDownloadFormListTask = null;
         }
-=======
-    public void formListDownloadingComplete(HashMap<String, FormDetails> result) {
-        dismissDialog(PROGRESS_DIALOG);
-        mDownloadFormListTask.setDownloaderListener(null);
-        mDownloadFormListTask = null;
->>>>>>> e566a801a933e75080d0667bf94c89c37513412c
+
 
         if (result == null) {
             Log.e(t, "Formlist Downloading returned null.  That shouldn't happen");
@@ -728,11 +700,9 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
                 		((details.formVersion == null) ? "" : (getString(R.string.version) + " " + details.formVersion + " ")) +
                 		"ID: " + details.formID );
                 item.put(FORMDETAIL_KEY, formDetailsKey);
-<<<<<<< HEAD
-=======
+
                 item.put(FORM_ID_KEY, details.formID);
                 item.put(FORM_VERSION_KEY, details.formVersion);
->>>>>>> e566a801a933e75080d0667bf94c89c37513412c
 
                 // Insert the new form in alphabetical order.
                 if (mFormList.size() == 0) {
@@ -749,13 +719,10 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
                     mFormList.add(j, item);
                 }
             }
-<<<<<<< HEAD
-            mFormListAdapter.notifyDataSetChanged();
-=======
+
             selectSupersededForms();
             mFormListAdapter.notifyDataSetChanged();
             mDownloadButton.setEnabled(!(selectedItemCount() == 0));
->>>>>>> e566a801a933e75080d0667bf94c89c37513412c
         }
     }
 
@@ -834,7 +801,6 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
         createAlertDialog(getString(R.string.download_forms_result), b.toString().trim(), EXIT);
     }
 
-<<<<<<< HEAD
     /**
      * Creates a dialog with the given message. Will exit the activity when the user preses "ok" if
      * shouldExit is set to true.
@@ -868,6 +834,5 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
         mAlertDialog.show();
     }
 
-=======
->>>>>>> e566a801a933e75080d0667bf94c89c37513412c
+
 }

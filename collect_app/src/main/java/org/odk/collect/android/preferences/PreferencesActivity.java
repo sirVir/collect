@@ -217,13 +217,13 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
     boolean autoPullAvailable = adminPreferences.getBoolean(
             AdminPreferencesActivity.KEY_AUTOPULL_NEW, true);
     if (!(autoPullAvailable || adminMode)) {
-      mAutosendCategory.removePreference(mAutoPullPreference);
+      autosendCategory.removePreference(mAutoPullPreference);
     }
 
     boolean autoPullFrequencyAvailable = adminPreferences.getBoolean(
             AdminPreferencesActivity.KEY_AUTOPULL_FREQUENCY, true);
     if (!(autoPullFrequencyAvailable || adminMode)) {
-      mAutosendCategory.removePreference(mAutoPullFrequency);
+      autosendCategory.removePreference(mAutoPullFrequency);
 
 
       if (!(autosendNetworkAvailable || autosendWifiAvailable || autoPullAvailable || autoPullFrequencyAvailable || adminMode)) {
