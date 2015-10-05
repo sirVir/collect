@@ -318,6 +318,7 @@ public final class WebUtils {
 	 */
 	public static DocumentFetchResult getXmlDocument(String urlString,
 			HttpContext localContext, HttpClient httpclient) {
+		boolean isSetting = false;
 		URI u = null;
 		try {
 			URL url = new URL(urlString);
@@ -336,6 +337,11 @@ public final class WebUtils {
 		// if https then enable preemptive basic auth...
 		if (u.getScheme().equals("https")) {
 			enablePreemptiveBasicAuth(localContext, u.getHost());
+		}
+
+		// checking if setting or form file
+		if (u.getPath().endsWith(".settings.xml")) {
+		    isSetting = true;
 		}
 
 		// set up request...

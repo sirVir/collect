@@ -273,6 +273,8 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
         getListView().setItemsCanFocus(false);
         setListAdapter(mFormListAdapter);
 
+        SurveyCheckService.cancelNotification(this);
+
         // Intent added to avoid re-downloading of the survey content
         Intent intent = getIntent();
         if (intent.getSerializableExtra("SurveyList") != null) {
@@ -280,7 +282,6 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
             formListDownloadingComplete(surveyList, true);
         }
 
-        SurveyCheckService.cancelNotification(this);
 
     }
 
@@ -587,6 +588,7 @@ public class FormDownloadList extends ListActivity implements FormListDownloader
             mAlertDialog.dismiss();
         }
         super.onPause();
+        SurveyCheckService.refreshRepeat(this, true);
     }
 
     /**

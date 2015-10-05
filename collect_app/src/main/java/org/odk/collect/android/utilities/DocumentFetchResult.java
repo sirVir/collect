@@ -15,12 +15,13 @@
 package org.odk.collect.android.utilities;
 
 import org.kxml2.kdom.Document;
- 
+
 public class DocumentFetchResult {
         public final String errorMessage;
         public final int responseCode;
         public final Document doc;
         public final boolean isOpenRosaResponse;
+        public final boolean isSettingResponse;
 
 
         public DocumentFetchResult(String msg, int response) {
@@ -28,6 +29,7 @@ public class DocumentFetchResult {
             errorMessage = msg;
             doc = null;
             isOpenRosaResponse = false;
+            isSettingResponse = false;
         }
 
 
@@ -36,5 +38,15 @@ public class DocumentFetchResult {
             errorMessage = null;
             this.doc = doc;
             this.isOpenRosaResponse = isOpenRosaResponse;
+            isSettingResponse = false;
+        }
+
+
+        public DocumentFetchResult(Document doc, boolean isOpenRosaResponse, boolean isSettingResponse) {
+            responseCode = 0;
+            errorMessage = null;
+            this.doc = doc;
+            this.isOpenRosaResponse = isOpenRosaResponse;
+            this.isSettingResponse = isSettingResponse;
         }
     }

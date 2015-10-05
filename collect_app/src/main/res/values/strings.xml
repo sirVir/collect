@@ -243,6 +243,7 @@
 <string name="found_at_end">Uncheck to hide from end of Form Entry</string>
 <string name="no_account">No account</string>
 <string name="save_preferences">Save Settings to Disk</string>
+<string name="get_preferences">Get Settings from Server</string>
 <string name="form_forward">Next</string>
 <string name="form_backward">Prev</string>
 <string name="navigation">Navigation</string>

@@ -224,7 +224,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
             AdminPreferencesActivity.KEY_AUTOPULL_FREQUENCY, true);
     if (!(autoPullFrequencyAvailable || adminMode)) {
       autosendCategory.removePreference(mAutoPullFrequency);
-
+    }
 
       if (!(autosendNetworkAvailable || autosendWifiAvailable || autoPullAvailable || autoPullFrequencyAvailable || adminMode)) {
         getPreferenceScreen().removePreference(autosendCategory);
@@ -259,6 +259,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
 
         Intent prefIntent = null;
         if (value.equals(getString(R.string.protocol_odk_default))) {
+          setDefaultAggregatePaths();
           setDefaultAggregatePaths();
           prefIntent = new Intent(PreferencesActivity.this, AggregatePreferencesActivity.class);
         } else if (value.equals(getString(R.string.protocol_google_maps_engine))) {
@@ -496,7 +497,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
       getPreferenceScreen().removePreference(clientCategory);
     }
 
-    }
+
   }
 
   @Override

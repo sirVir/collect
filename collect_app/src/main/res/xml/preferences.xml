@@ -59,7 +59,7 @@
             android:title="@string/autosend_network" />
         <ListPreference
             android:id="@+id/autopull_new"
-            android:defaultValue="unmetered"
+            android:defaultValue="connected"
             android:dialogTitle="@string/change_autopull"
             android:entries="@array/autopull_entries"
             android:entryValues="@array/autopull_entry_values"
@@ -68,7 +68,7 @@
             android:summary="@string/autopull_summary" />
         <ListPreference
             android:id="@+id/autopull_frequency"
-            android:defaultValue="3600"
+            android:defaultValue="60"
             android:dialogTitle="@string/change_autopull_frequency"
             android:entries="@array/autopull_frequency_entries"
             android:entryValues="@array/autopull_frequency_entry_values"

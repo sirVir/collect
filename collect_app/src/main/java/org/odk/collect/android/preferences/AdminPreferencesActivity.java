@@ -17,11 +17,19 @@ package org.odk.collect.android.preferences;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
@@ -30,7 +38,12 @@ import android.preference.Preference;
 import org.javarosa.core.model.FormDef;
 import org.odk.collect.android.R;
 import org.odk.collect.android.application.Collect;
+import org.odk.collect.android.tasks.DownloadCollectSettingsTask;
+import org.odk.collect.android.tasks.DownloadFormsTask;
 import org.odk.collect.android.utilities.CompatibilityUtils;
+import org.odk.collect.android.utils.XmlUtils;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlSerializer;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -38,6 +51,7 @@ import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.util.Xml;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -86,8 +100,8 @@ public class AdminPreferencesActivity extends PreferenceActivity {
 
     public static String KEY_AUTOSEND_WIFI = "autosend_wifi";
     public static String KEY_AUTOSEND_NETWORK = "autosend_network";
-	public static String KEY_AUTOPULL_NEW = "autopull_new";
-	public static String KEY_AUTOPULL_FREQUENCY = "autopull_frequency";
+    public static String KEY_AUTOPULL_NEW = "autopull_new";
+    public static String KEY_AUTOPULL_FREQUENCY = "autopull_frequency";
 
     public static String KEY_NAVIGATION = "navigation";
     public static String KEY_CONSTRAINT_BEHAVIOR = "constraint_behavior";
@@ -95,7 +109,7 @@ public class AdminPreferencesActivity extends PreferenceActivity {
     public static String KEY_FORM_PROCESSING_LOGIC = "form_processing_logic";
 
     private static final int SAVE_PREFS_MENU = Menu.FIRST;
-
+    private static final int GET_PREFS_MENU = 2;
 
     private CheckBoxPreference mAutoPullPreference;
     private CheckBoxPreference mAutoPullFrequency;
@@ -127,10 +141,11 @@ public class AdminPreferencesActivity extends PreferenceActivity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
 
                 if (preference.getKey() == KEY_AUTOPULL_NEW)
-                    if (!preference.isEnabled())if (!preference.isEnabled())
-                            mAutoPullFrequency.setEnabled(false);
+                    if (!preference.isEnabled()) if (!preference.isEnabled())
+                        mAutoPullFrequency.setEnabled(false);
                     else {
-                            mAutoPullFrequency.setEnabled(true);mAutoPullFrequency.setEnabled(true);
+                        mAutoPullFrequency.setEnabled(true);
+                        mAutoPullFrequency.setEnabled(true);
                     }
 
                 int index = ((ListPreference) preference).findIndexOfValue(newValue.toString());
@@ -142,110 +157,128 @@ public class AdminPreferencesActivity extends PreferenceActivity {
     }
 
     @Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		Collect.getInstance().getActivityLogger()
-			.logAction(this, "onCreateOptionsMenu", "show");
-		super.onCreateOptionsMenu(menu);
+    public boolean onCreateOptionsMenu(Menu menu) {
+        Collect.getInstance().getActivityLogger()
+                .logAction(this, "onCreateOptionsMenu", "show");
+        super.onCreateOptionsMenu(menu);
 
-		CompatibilityUtils.setShowAsAction(
-    		menu.add(0, SAVE_PREFS_MENU, 0, R.string.save_preferences)
-				.setIcon(R.drawable.ic_menu_save),
-			MenuItem.SHOW_AS_ACTION_NEVER);
-		return true;
-	}
+        CompatibilityUtils.setShowAsAction(
+                menu.add(0, SAVE_PREFS_MENU, 0, R.string.save_preferences)
+                        .setIcon(R.drawable.ic_menu_save),
+                MenuItem.SHOW_AS_ACTION_NEVER);
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case SAVE_PREFS_MENU:
-			File writeDir = new File(Collect.ODK_ROOT + "/settings");
-			if (!writeDir.exists()) {
-				if (!writeDir.mkdirs()) {
-					Toast.makeText(
-							this,
-							"Error creating directory "
-									+ writeDir.getAbsolutePath(),
-							Toast.LENGTH_SHORT).show();
-					return false;
-				}
-			}
+        CompatibilityUtils.setShowAsAction(
+                menu.add(0, GET_PREFS_MENU, 0, R.string.get_preferences)
+                        .setIcon(R.drawable.ic_menu_refresh),
+                MenuItem.SHOW_AS_ACTION_NEVER);
 
-			File pref_dst = new File(writeDir.getAbsolutePath()
-					+ "/collect_pref.settings");
+        return true;
+    }
 
-			File admin_dst = new File(writeDir.getAbsolutePath()
-					+ "/collect_admin.settings");
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case SAVE_PREFS_MENU:
+                File writeDir = new File(Collect.ODK_ROOT + "/settings");
+                if (!writeDir.exists()) {
+                    if (!writeDir.mkdirs()) {
+                        Toast.makeText(
+                                this,
+                                "Error creating directory "
+                                        + writeDir.getAbsolutePath(),
+                                Toast.LENGTH_SHORT).show();
+                        return false;
+                    }
+                }
 
+                File pref_dst = new File(writeDir.getAbsolutePath()
+                        + "/global.xml");
 
-			boolean success1 = AdminPreferencesActivity.saveSharedPreferencesToFile(pref_dst, this, Collect.CONFIG_TYPE.USER_CONFIG);
-			boolean success2 = AdminPreferencesActivity.saveSharedPreferencesToFile(admin_dst, this,Collect.CONFIG_TYPE.ADMIN_CONFIG );
-
-			if (success1 && success2) {
-				Toast.makeText(
-						this,
-						"Settings successfully written to "
-								+ pref_dst.getAbsolutePath() + " and " + admin_dst.getAbsolutePath(),
-						Toast.LENGTH_LONG)
-						.show();
-			} else {
-				Toast.makeText(this,
-						"Error writing settings",
-						Toast.LENGTH_LONG).show();
-			}
-			return true;
+                File admin_dst = new File(writeDir.getAbsolutePath()
+                        + "/admin.xml");
 
 
+                boolean success1 = AdminPreferencesActivity.trySaveSharedPreferencesToFile(pref_dst, this, Collect.CONFIG_TYPE.USER_CONFIG);
+                boolean success2 = AdminPreferencesActivity.trySaveSharedPreferencesToFile(admin_dst, this, Collect.CONFIG_TYPE.ADMIN_CONFIG);
 
-		}
-		return super.onOptionsItemSelected(item);
-	}
+                if (success1 && success2) {
+                    Toast.makeText(
+                            this,
+                            "Settings successfully written to "
+                                    + pref_dst.getAbsolutePath() + " and " + admin_dst.getAbsolutePath(),
+                            Toast.LENGTH_LONG)
+                            .show();
+                } else {
+                    Toast.makeText(this,
+                            "Error writing settings",
+                            Toast.LENGTH_LONG).show();
+                }
+                return true;
+
+            case GET_PREFS_MENU:
+                boolean result = false;
+                List<String> names = new ArrayList<String>(Arrays.asList("admin","global"));
+                    DownloadCollectSettingsTask t = new DownloadCollectSettingsTask();
+                try {
+                    result = t.execute(names).get(8, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    Toast.makeText(this,
+                            "Error while getting settings",
+                            Toast.LENGTH_LONG).show();
+                    return super.onOptionsItemSelected(item);
+                }
+                if (result)
+                {
+                    Toast.makeText(this,
+                        "Succesfully downloaded setting files",
+                        Toast.LENGTH_LONG).show();
+                }
+                 else
+                {
+                    Toast.makeText(this,
+                        "Error while getting settings",
+                        Toast.LENGTH_LONG).show();
+                }
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
 
-	public static boolean saveSharedPreferencesToFile(File dst, Context context, Collect.CONFIG_TYPE type) {
-		// this should be in a thread if it gets big, but for now it's tiny
-		boolean res = false;
-		FileOutputStream output = null;
-		Map<String,?> values = null;
-		try {
-			switch (type)
-			{
-				case ADMIN_CONFIG:
-					output = new FileOutputStream(dst);
-					SharedPreferences adminPreferences = context.getSharedPreferences(
-                            AdminPreferencesActivity.ADMIN_PREFERENCES, 0);
-					values = adminPreferences.getAll();
-					String adminPrefSerialized = new Gson().toJson(values);
-					output.write(adminPrefSerialized.getBytes());
-					res = true;
-					break;
+    public static boolean trySaveSharedPreferencesToFile(File dst, Context context, Collect.CONFIG_TYPE type) {
+        // this should be in a thread if it gets big, but for now it's tiny
+        Map<String, ?> values = null;
+        boolean res = false;
+        try {
+            SharedPreferences prefs = null;
+            FileWriter output = new FileWriter(dst);
+            if (type == Collect.CONFIG_TYPE.ADMIN_CONFIG) {
+                prefs = context.getSharedPreferences(
+                        AdminPreferencesActivity.ADMIN_PREFERENCES, 0);
+            }
 
-				case USER_CONFIG:
-					output = new FileOutputStream(dst);
-					SharedPreferences pref = PreferenceManager
-							.getDefaultSharedPreferences(context);
-					values = pref.getAll();
-					String prefSerialized = new Gson().toJson(values);
-					output.write(prefSerialized.getBytes());
-					res = true;
-					break;
-			}
+            else if (type == Collect.CONFIG_TYPE.USER_CONFIG) {
+                prefs = PreferenceManager
+                        .getDefaultSharedPreferences(context);
+            }
 
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		finally {
-			try {
-				if (output != null) {
-					output.flush();
-					output.close();
-				}
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			}
-		}
-		return res;
+            else {
+                throw new IOException("Unsupported setting type");
+            }
+
+            FileOutputStream fos = new FileOutputStream(dst);
+            XmlUtils.writeMapXml(prefs.getAll(), fos);
+            fos.close();
+
+            res = true;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            res = false;
+        } catch (XmlPullParserException e) {
+            res = false;
+        }
+
+        return res;
 	}
 
     public static FormDef.EvalBehavior getConfiguredFormProcessingLogic(Context context) {
@@ -289,4 +322,10 @@ public class AdminPreferencesActivity extends PreferenceActivity {
 
         return mode;
     }
+
+
+
+
+
+
 }

@@ -35,6 +35,8 @@ import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 import org.odk.collect.android.services.SurveyCheckService;
 import org.odk.collect.android.utilities.CompatibilityUtils;
+import org.odk.collect.android.utils.XmlUtils;
+import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -133,7 +135,7 @@ public class MainMenuActivity extends Activity {
                 + getString(R.string.main_menu));
 
         Boolean b1 = false;
-        File f1 = new File(Collect.ODK_ROOT + "/settings/collect_pref.settings");
+        File f1 = new File(Collect.ODK_ROOT + "/settings/global.xml");
         if (f1.exists()) {
             boolean success = loadSharedUserPreferencesFromFile(f1);
             if (success) {
@@ -143,7 +145,7 @@ public class MainMenuActivity extends Activity {
         }
 
         Boolean b2 = false;
-        File f2 = new File(Collect.ODK_ROOT + "/settings/collect_admin.settings");
+        File f2 = new File(Collect.ODK_ROOT + "/settings/admin.xml");
         if (f2.exists()) {
             boolean success = loadSharedAdminPreferencesFromFile(f2);
             if (success) {
@@ -536,7 +538,6 @@ public class MainMenuActivity extends Activity {
 
     /**
      * notifies us that something changed
-     *
      */
     private class MyContentObserver extends ContentObserver {
 
@@ -571,9 +572,94 @@ public class MainMenuActivity extends Activity {
     }
 
     private boolean loadSharedUserPreferencesFromFile(File src) {
-        // this should probably be in a thread if it ever gets big
-        boolean res = false;
 
+        FileInputStream input = null;
+        try {
+            input = new FileInputStream(src);
+            Editor prefEdit = PreferenceManager.getDefaultSharedPreferences(
+                    this).edit();
+            prefEdit.clear();
+            Map<String, ?> entries = XmlUtils.readMapXml(input);
+            for (Entry<String, ?> entry : entries.entrySet()) {
+
+                Object v = entry.getValue();
+                String key = entry.getKey();
+
+                if (v instanceof Boolean)
+                    prefEdit.putBoolean(key, ((Boolean) v).booleanValue());
+                else if (v instanceof Float)
+                    prefEdit.putFloat(key, ((Float) v).floatValue());
+                else if (v instanceof Integer)
+                    prefEdit.putInt(key, ((Integer) v).intValue());
+                else if (v instanceof Long)
+                    prefEdit.putLong(key, ((Long) v).longValue());
+                else if (v instanceof String)
+                    prefEdit.putString(key, ((String) v));
+            }
+            prefEdit.commit();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        } catch (XmlPullParserException e) {
+            e.printStackTrace();
+            return false;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean loadSharedAdminPreferencesFromFile(File src) {
+
+        FileInputStream input = null;
+        try {
+            input = new FileInputStream(src);
+            Editor adminEdit = getSharedPreferences(AdminPreferencesActivity.ADMIN_PREFERENCES, 0).edit();
+            adminEdit.clear();
+            Map<String, ?> entries = XmlUtils.readMapXml(input);
+            for (Entry<String, ?> entry : entries.entrySet()) {
+
+                Object v = entry.getValue();
+                String key = entry.getKey();
+
+                if (v instanceof Boolean)
+                    adminEdit.putBoolean(key, ((Boolean) v).booleanValue());
+                else if (v instanceof Float)
+                    adminEdit.putFloat(key, ((Float) v).floatValue());
+                else if (v instanceof Integer)
+                    adminEdit.putInt(key, ((Integer) v).intValue());
+                else if (v instanceof Long)
+                    adminEdit.putLong(key, ((Long) v).longValue());
+                else if (v instanceof String)
+                    adminEdit.putString(key, ((String) v));
+            }
+            adminEdit.commit();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        } catch (XmlPullParserException e) {
+            e.printStackTrace();
+            return false;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+}
+
+
+        // this should probably be in a thread if it ever gets big
+
+
+
+
+       /* boolean res = false;
         String ret = "";
         try {
             ret = new Scanner(src).useDelimiter("\\Z").next();
@@ -612,6 +698,24 @@ public class MainMenuActivity extends Activity {
 
 
     private boolean loadSharedAdminPreferencesFromFile(File src) {
+
+
+
+        FileInputStream input = null;
+try {
+    input = new FileInputStream(src);
+        Editor prefEdit = getSharedPreferences(prefName, MODE_PRIVATE).edit();
+        prefEdit.clear();
+        Map<String, ?> entries = XmlUtils.readMapXml(input);
+        for (Entry<String, ?> entry : entries.entrySet()) {
+
+
+
+
+
+
+
+/*
         // this should probably be in a thread if it ever gets big
         boolean res = false;
         ObjectInputStream input = null;
@@ -638,6 +742,7 @@ public class MainMenuActivity extends Activity {
             } catch (IOException e) {
                 Log.e("login activity", "Can not read file: " + e.toString());
             }
+
 
 
             Map<String, ?> prefs = new Gson().fromJson(ret, Map.class);
@@ -674,6 +779,9 @@ public class MainMenuActivity extends Activity {
             }
         }
         return res;
+
+
     }
 
 }
+*/

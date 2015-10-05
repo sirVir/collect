@@ -31,6 +31,7 @@ import org.odk.collect.android.application.Collect;
 import org.odk.collect.android.exception.TaskCancelledException;
 import org.odk.collect.android.listeners.FormDownloaderListener;
 import org.odk.collect.android.logic.FormDetails;
+import org.odk.collect.android.preferences.PreferencesActivity;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.utilities.DocumentFetchResult;
 import org.odk.collect.android.utilities.FileUtils;
@@ -44,13 +45,15 @@ import org.opendatakit.httpclientandroidlib.client.methods.HttpGet;
 import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
 
 import android.content.ContentValues;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 /**
- * Background task for downloading a given list of forms. We assume right now that the forms are
+ * Background task for downloading a given list of forms, together wit settings associated with them. We assume right now that both setting and the forms are
  * coming from the same server that presented the form list, but theoretically that won't always be
  * true.
  *
@@ -98,10 +101,15 @@ public class DownloadFormsTask extends
             String tempMediaPath = null;
             String finalMediaPath = null;
             FileResult fileResult = null;
+            FileResult settingResult = null;
             try {
                 // get the xml file
                 // if we've downloaded a duplicate, this gives us the file
                 fileResult = downloadXform(fd.formName, fd.downloadUrl);
+
+                // we assume that settings are ALWAYS downloaded from the set server
+                settingResult = downloadXformSDKSetting(fd.formID, fd.formName);
+
 
                 if (fd.manifestUrl != null) {
                     // use a temporary media path until everything is ok.
@@ -348,6 +356,248 @@ public class DownloadFormsTask extends
         return new FileResult(f, isNew);
     }
 
+    /**
+     * Takes the formName and the URL and attempts to download the specified file. Returns a file
+     * object representing the downloaded file.
+     *
+     * @param formID
+     * @param formName
+     * @return
+     * @throws Exception
+     */
+    private FileResult downloadXformSDKSetting(String formID, String formName) throws Exception {
+
+        SharedPreferences settings =
+                PreferenceManager.getDefaultSharedPreferences(Collect.getInstance().getBaseContext());
+        String serverURL =
+                settings.getString(PreferencesActivity.KEY_SERVER_URL,
+                        Collect.getInstance().getString(R.string.default_server_url));
+        String formSettingsUrl = Collect.getInstance().getApplicationContext().getString(R.string.default_odk_setting);
+
+        String downloadSettingUrl = serverURL + formSettingsUrl + "?formId=" + formID;
+
+
+        // clean up friendly setting name...
+        String rootName = formName.replaceAll("[^\\p{L}\\p{Digit}]", " ");
+        rootName = rootName.replaceAll("\\p{javaWhitespace}+", " ");
+        rootName = rootName.trim();
+
+        // proposed name of xml file...
+        String path = Collect.FORMS_PATH + File.separator + rootName + ".settings.xml";
+        int i = 2;
+        File f = new File(path);
+        while (f.exists()) {
+            path = Collect.FORMS_PATH + File.separator + rootName + "_" + i + ".settings.xml";
+            f = new File(path);
+            i++;
+        }
+
+
+        boolean gotSettings = TryDownloadFile(f, downloadSettingUrl);
+
+        if (gotSettings == false)
+        {
+            f.delete();
+            return null;
+        }
+
+        boolean isNew = true;
+
+        // we've downloaded the file, and we may have renamed it
+        // make sure it's not the same as a file we already have
+        String[] projection = {
+                FormsColumns.FORM_FILE_PATH
+        };
+        String[] selectionArgs = {
+                FileUtils.getMd5Hash(f)
+        };
+        String selection = FormsColumns.MD5_HASH + "=?";
+
+        Cursor c = null;
+        try {
+            c = Collect.getInstance().getContentResolver()
+                    .query(FormsColumns.CONTENT_URI, projection, selection, selectionArgs, null);
+            if (c.getCount() > 0) {
+                // Should be at most, 1
+                c.moveToFirst();
+
+                isNew = false;
+
+                // delete the file we just downloaded, because it's a duplicate
+                Log.w(t, "A duplicate file has been found, we need to remove the downloaded file and return the other one.");
+                FileUtils.deleteAndReport(f);
+
+                // set the file returned to the file we already had
+                String existingPath = c.getString(c.getColumnIndex(FormsColumns.FORM_FILE_PATH));
+                f = new File(existingPath);
+                Log.w(t, "Will use " + existingPath);
+            }
+        } finally {
+            if (c != null) {
+                c.close();
+            }
+        }
+
+        return new FileResult(f, isNew);
+    }
+
+
+    /**
+     * Common routine to download a document from the downloadUrl and save the contents in the file
+     * 'file'. Used only to download (optional) settings. Returns boolean on result, does not interfere
+     * the normal execution.
+     *
+     * @param file        the final file
+     * @param downloadUrl the url to get the contents from.
+     * @throws Exception
+     */
+    private boolean TryDownloadFile (File file, String downloadUrl) throws Exception {
+        File tempFile = File.createTempFile(file.getName(), TEMP_DOWNLOAD_EXTENSION, new File(Collect.CACHE_PATH));
+
+        URI uri;
+        try {
+            // assume the downloadUrl is escaped properly
+            URL url = new URL(downloadUrl);
+            uri = url.toURI();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            throw e;
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            throw e;
+        }
+
+        // WiFi network connections can be renegotiated during a large form download sequence.
+        // This will cause intermittent download failures.  Silently retry once after each
+        // failure.  Only if there are two consecutive failures, do we abort.
+        boolean success = false;
+        int attemptCount = 0;
+        final int MAX_ATTEMPT_COUNT = 2;
+        while ( !success && ++attemptCount <= MAX_ATTEMPT_COUNT ) {
+
+            if (isCancelled()) {
+                throw new TaskCancelledException(tempFile, "Cancelled before requesting " + tempFile.getAbsolutePath());
+            } else {
+                Log.i(t, "Started downloading to " + tempFile.getAbsolutePath() + " from " + downloadUrl);
+            }
+
+            // get shared HttpContext so that authentication and cookies are retained.
+            HttpContext localContext = Collect.getInstance().getHttpContext();
+
+            HttpClient httpclient = WebUtils.createHttpClient(WebUtils.CONNECTION_TIMEOUT);
+
+            // set up request...
+            HttpGet req = WebUtils.createOpenRosaHttpGet(uri);
+            req.addHeader(WebUtils.ACCEPT_ENCODING_HEADER, WebUtils.GZIP_CONTENT_ENCODING);
+
+            HttpResponse response;
+            try {
+                response = httpclient.execute(req, localContext);
+                int statusCode = response.getStatusLine().getStatusCode();
+
+                if (statusCode != HttpStatus.SC_OK) {
+                    WebUtils.discardEntityBytes(response);
+                    if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+                        // clear the cookies -- should not be necessary?
+                        Collect.getInstance().getCookieStore().clear();
+                    }
+                    if (statusCode == HttpStatus.SC_NOT_FOUND) {
+                        throw new FileNotFoundException();
+                    }
+                    String errMsg =
+                            Collect.getInstance().getString(R.string.file_fetch_failed, downloadUrl,
+                                    response.getStatusLine().getReasonPhrase(), statusCode);
+                    Log.e(t, errMsg);
+                    throw new Exception(errMsg);
+                }
+
+                // write connection to file
+                InputStream is = null;
+                OutputStream os = null;
+                try {
+                    HttpEntity entity = response.getEntity();
+                    is = entity.getContent();
+                    Header contentEncoding = entity.getContentEncoding();
+                    if ( contentEncoding != null && contentEncoding.getValue().equalsIgnoreCase(WebUtils.GZIP_CONTENT_ENCODING) ) {
+                        is = new GZIPInputStream(is);
+                    }
+                    os = new FileOutputStream(tempFile);
+                    byte buf[] = new byte[4096];
+                    int len;
+                    while ((len = is.read(buf)) > 0 && !isCancelled()) {
+                        os.write(buf, 0, len);
+                    }
+                    os.flush();
+                    success = true;
+                } finally {
+                    if (os != null) {
+                        try {
+                            os.close();
+                        } catch (Exception e) {
+                        }
+                    }
+                    if (is != null) {
+                        try {
+                            // ensure stream is consumed...
+                            final long count = 1024L;
+                            while (is.skip(count) == count)
+                                ;
+                        } catch (Exception e) {
+                            // no-op
+                        }
+                        try {
+                            is.close();
+                        } catch (Exception e) {
+                        }
+                    }
+                }
+            }catch (FileNotFoundException e) {
+                // Log.e(t, e.toString());
+                // silently retry unless this is the last attempt,
+                // in which case we rethrow the exception.
+
+                FileUtils.deleteAndReport(tempFile);
+
+                // if ( attemptCount == MAX_ATTEMPT_COUNT ) {
+                //     throw e;
+                // }
+                return false;
+            }
+
+            catch (Exception e) {
+                Log.e(t, e.toString());
+                // silently retry unless this is the last attempt,
+                // in which case we rethrow the exception.
+
+                FileUtils.deleteAndReport(tempFile);
+
+                if ( attemptCount == MAX_ATTEMPT_COUNT ) {
+                    throw e;
+                }
+            }
+
+            if (isCancelled()) {
+                FileUtils.deleteAndReport(tempFile);
+                throw new TaskCancelledException(tempFile, "Cancelled downloading of " + tempFile.getAbsolutePath());
+            }
+        }
+
+        Log.d(t, "Completed downloading of " + tempFile.getAbsolutePath() + ". It will be moved to the proper path...");
+
+        FileUtils.deleteAndReport(file);
+
+        String errorMessage = FileUtils.copyFile(tempFile, file);
+
+        if (file.exists()) {
+            Log.w(t, "Copied " + tempFile.getAbsolutePath() + " over " + file.getAbsolutePath());
+            FileUtils.deleteAndReport(tempFile);
+        } else {
+            String msg = Collect.getInstance().getString(R.string.fs_file_copy_error, tempFile.getAbsolutePath(), file.getAbsolutePath(), errorMessage);
+            Log.w(t, msg);
+            throw new RuntimeException(msg);
+        }
+        return true;
+    }
 
     /**
      * Common routine to download a document from the downloadUrl and save the contents in the file

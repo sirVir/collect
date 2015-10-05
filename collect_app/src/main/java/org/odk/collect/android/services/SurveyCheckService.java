@@ -16,6 +16,7 @@ import android.util.Log;
 
 import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.GcmTaskService;
+import com.google.android.gms.gcm.OneoffTask;
 import com.google.android.gms.gcm.PeriodicTask;
 import com.google.android.gms.gcm.Task;
 import com.google.android.gms.gcm.TaskParams;
@@ -27,6 +28,7 @@ import org.odk.collect.android.preferences.PreferencesActivity;
 import org.odk.collect.android.tasks.DownloadFormListTask;
 
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
 
 public class SurveyCheckService extends GcmTaskService implements FormListDownloaderListener {
 
@@ -45,7 +47,6 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
         //you have to schedule your repeating tasks again
         super.onInitializeTasks();
         isScheduled = false;
-        isDownloaded = false;
         refreshRepeat(this, true);
     }
 
@@ -58,12 +59,9 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo ni = connectivityManager.getActiveNetworkInfo();
 
-        if (ni == null || !ni.isConnected() || isDownloaded) {
+        if (ni == null || !ni.isConnected()) {
             return GcmNetworkManager.RESULT_RESCHEDULE;
         } else {
-
-           //  HashMap<String, FormDetails> mFormNamesAndURLs = new HashMap<String, FormDetails>();
-
 
             if (mDownloadFormListTask != null &&
                     mDownloadFormListTask.getStatus() != AsyncTask.Status.FINISHED) {
@@ -78,13 +76,19 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
 
             mDownloadFormListTask = new DownloadFormListTask();
             mDownloadFormListTask.setDownloaderListener(this);
-            mDownloadFormListTask.execute();
+            try {
+                mDownloadFormListTask.execute().get();
+            } catch (InterruptedException e) {
+                return GcmNetworkManager.RESULT_RESCHEDULE;
+            } catch (ExecutionException e) {
+                return GcmNetworkManager.RESULT_RESCHEDULE;
+            }
+
             return GcmNetworkManager.RESULT_SUCCESS;
         }
     }
 
-    /**
-     *
+    /*
      * @param context The Context of the app to be passed
      * @param forced Flag if to force the rescheduling. Setting it to true will reset the current waiting period
      */
@@ -112,14 +116,12 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
         Log.e(TAG, choosen);
         //in this method, single Repeating task is scheduled (the target service that will be called is SurveyCheckService.class)
         try {
-            PeriodicTask.Builder periodic = new PeriodicTask.Builder()
+            OneoffTask.Builder periodic = new OneoffTask.Builder()
                     //specify target service - must extend GcmTaskService
                     .setService(SurveyCheckService.class)
                             //set repeat period to one of the predefined values
-                    .setPeriod(period)
+                    .setExecutionWindow(period - period / 10, period + period/10)
                             //10% of flexibility allowed
-                    .setFlex(period / 10)
-                            //tag that is unique to this task (can be used to cancel task)
                     .setTag(GCM_REPEAT_TAG)
                             //whether the task persists after device reboot
                     .setPersisted(true)
@@ -138,7 +140,7 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
                 throw new IllegalArgumentException("Unsupported scheduling command");
             }
 
-            PeriodicTask task = periodic.build();
+            OneoffTask task = periodic.build();
 
             GcmNetworkManager.getInstance(context).schedule(task);
         } catch (Exception e) {
@@ -151,7 +153,6 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
 
     public void formListDownloadingComplete(final HashMap<String, FormDetails> value, Boolean silent) {
 
-        isDownloaded = true;
         if (!value.isEmpty()) {
 
             Handler h = new Handler(getMainLooper());
@@ -181,6 +182,7 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            isScheduled = false;
         }
     }
 
@@ -189,7 +191,6 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
      * @param c Context to be passed
      */
     public static void cancelNotification(final Context c) {
-        isDownloaded = false;
         new Thread() {
             @Override
             public void run() {
