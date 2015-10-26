@@ -75,6 +75,21 @@
             android:key="autopull_frequency"
             android:title="@string/autopull_frequency_title"
             android:summary="@string/autopull_frequency_summary" />
+        <CheckBoxPreference
+            android:id="@+id/survey_schedule"
+            android:defaultValue="false"
+            android:key="survey_schedule"
+            android:summary="@string/survey_schedule_summary"
+            android:title="@string/survey_schedule" />
+        <ListPreference
+            android:id="@+id/schedule_frequency"
+            android:defaultValue="86400"
+            android:dialogTitle="@string/change_schedule_frequency"
+            android:entries="@array/schedule_frequency_entries"
+            android:entryValues="@array/schedule_frequency_values"
+            android:key="schedule_frequency"
+            android:title="@string/change_schedule_frequency_title"
+            android:summary="@string/change_schedule_frequency_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="@string/client"

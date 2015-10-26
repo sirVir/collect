@@ -107,6 +107,8 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
   public static final String KEY_AUTOSEND_NETWORK = "autosend_network";
   public static final String KEY_AUTOPULL_NEW = "autopull_new";
   public static final String KEY_AUTOPULL_FREQUENCY = "autopull_frequency";
+  public static final String KEY_SURVEY_SCHEDULE = "survey_schedule";
+  public static final String KEY_SCHEDULE_FREQUENCY = "schedule_frequency";
   public static final String KEY_NAVIGATION = "navigation";
   public static final String KEY_CONSTRAINT_BEHAVIOR = "constraint_behavior";
 
@@ -121,6 +123,9 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
   private CheckBoxPreference mAutosendNetworkPreference;
   private ListPreference mAutoPullPreference;
   private ListPreference mAutoPullFrequency;
+
+  private CheckBoxPreference surveySchedulePreference;
+  private ListPreference scheduleFrequencyPreference;
 
 
   private ListPreference mProtocolPreference;
@@ -152,6 +157,9 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
     mAutosendWifiPreference = (CheckBoxPreference) findPreference(KEY_AUTOSEND_WIFI);
     mAutosendNetworkPreference = (CheckBoxPreference) findPreference(KEY_AUTOSEND_NETWORK);
     mAutoPullPreference = (ListPreference) findPreference(KEY_AUTOPULL_NEW);
+    mAutoPullFrequency = (ListPreference) findPreference(KEY_AUTOPULL_FREQUENCY);
+    surveySchedulePreference = (CheckBoxPreference) findPreference(KEY_SURVEY_SCHEDULE);
+    scheduleFrequencyPreference = (ListPreference) findPreference(KEY_SCHEDULE_FREQUENCY);
 
     final Context ctx = this;
     mAutoPullPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
@@ -169,7 +177,6 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
         return true;
       }
     });
-    mAutoPullFrequency = (ListPreference) findPreference(KEY_AUTOPULL_FREQUENCY);
       mAutoPullFrequency.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
           @Override
           public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -183,6 +190,27 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
               return true;
           }
       });
+
+    surveySchedulePreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
+        if (newValue.toString().equals("false"))
+          scheduleFrequencyPreference.setEnabled(false);
+        else
+          scheduleFrequencyPreference.setEnabled(true);
+        return true;
+
+      }
+    });
+
+    scheduleFrequencyPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
+
+//
+        return true;
+      }
+    });
 
     PreferenceCategory serverCategory = (PreferenceCategory) findPreference(getString(R.string.server_preferences));
 

@@ -47,6 +47,8 @@ public final class FormsProviderAPI {
         public static final String JR_VERSION = "jrVersion"; // can be null
         public static final String FORM_FILE_PATH = "formFilePath";
         public static final String SUBMISSION_URI = "submissionUri"; // can be null
+        public static final String FILL_STATUS = "fillStatus"; // can be null
+        public static final String FILL_NEXT_DATE = "fillDate"; // can be null
         public static final String BASE64_RSA_PUBLIC_KEY = "base64RsaPublicKey"; // can be null
 
         // these are generated for you (but you can insert something else if you want)
@@ -59,7 +61,13 @@ public final class FormsProviderAPI {
         
         // this is null on create, and can only be set on an update.
         public static final String LANGUAGE = "language";
-        
-        
+
+
+
+        public static final String FILL_STATUS_SCHEDULED = "scheduled";
+        public static final String FILL_STATUS_NOT_SCHEDULED = "not_scheduled";
+
+
+
     }
 }

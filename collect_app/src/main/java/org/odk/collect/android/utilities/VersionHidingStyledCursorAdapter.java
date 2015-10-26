@@ -1,0 +1,94 @@
+/*
+ * Copyright (C) 2012 University of Washington
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package org.odk.collect.android.utilities;
+
+import org.odk.collect.android.R;
+import org.odk.collect.android.provider.FormsProviderAPI;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.graphics.PorterDuff;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.media.Image;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
+
+/**
+ * Implementation of cursor adapter that displays the version of a form if a form has a version.
+ *
+ * @author mitchellsundt@gmail.com
+ *
+ */
+public class VersionHidingStyledCursorAdapter extends SimpleCursorAdapter {
+
+	private final Context ctxt;
+	private final String versionColumnName;
+	private final String fillStatusColumnName;
+	private final ViewBinder originalBinder;
+
+	public VersionHidingStyledCursorAdapter(String versionColumnName, String fillStatusColumnName, Context context, int layout, Cursor c, String[] from, int[] to) {
+		super(context, layout, c, from, to);
+		this.versionColumnName = versionColumnName;
+		this.fillStatusColumnName = fillStatusColumnName;
+		ctxt =  context;
+		originalBinder = getViewBinder();
+		setViewBinder( new ViewBinder(){
+
+			@Override
+			public boolean setViewValue(View view, Cursor cursor,
+										int columnIndex) {
+				String columnName = cursor.getColumnName(columnIndex);
+				if (columnName.equals(VersionHidingStyledCursorAdapter.this.versionColumnName ) ) {
+					String version = cursor.getString(columnIndex);
+					TextView v = (TextView) view;
+					if (version != null) {
+						v.setText(ctxt.getString(R.string.version) + " " + version);
+						v.setVisibility(View.VISIBLE);
+					} else if (columnName.equals(VersionHidingStyledCursorAdapter.this.versionColumnName)) {
+						v.setText(null);
+						v.setVisibility(View.GONE);
+					}
+				} else if (columnName.equals(VersionHidingStyledCursorAdapter.this.fillStatusColumnName ) ) {
+						String style = cursor.getString(columnIndex);
+						ImageView v = (ImageView) view;
+						if ( style == FormsProviderAPI.FormsColumns.FILL_STATUS_SCHEDULED) {
+							Drawable d = ctxt.getResources().getDrawable(android.R.drawable.stat_notify_error);
+							d.setColorFilter(0xffff0000, PorterDuff.Mode.MULTIPLY );
+							v.setImageDrawable(d);
+
+						} else if ( style == FormsProviderAPI.FormsColumns.FILL_STATUS_NOT_SCHEDULED) {
+							Drawable d = ctxt.getResources().getDrawable(android.R.drawable.stat_notify_error);
+							d.setColorFilter(0x00ff0000, PorterDuff.Mode.MULTIPLY );
+							v.setImageDrawable(d);
+						} else {
+							//Drawable d = ctxt.getResources().getDrawable(android.R.drawable.stat_notify_error);
+							//d.setColorFilter(0xffff0000, PorterDuff.Mode.MULTIPLY);
+							//v.setImageDrawable(d);
+						}
+				}
+				else {
+					if ( originalBinder != null ) {
+						return originalBinder.setViewValue(view, cursor, columnIndex);
+					}
+					return false;
+				}
+				return true;
+			}} );
+	}
+
+}

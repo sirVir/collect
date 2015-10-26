@@ -19,7 +19,7 @@ import org.odk.collect.android.application.Collect;
 import org.odk.collect.android.listeners.DiskSyncListener;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.tasks.DiskSyncTask;
-import org.odk.collect.android.utilities.VersionHidingCursorAdapter;
+import org.odk.collect.android.utilities.VersionHidingStyledCursorAdapter;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -72,15 +72,15 @@ public class FormChooserList extends ListActivity implements DiskSyncListener {
         Cursor c = managedQuery(FormsColumns.CONTENT_URI, null, null, null, sortOrder);
 
         String[] data = new String[] {
-                FormsColumns.DISPLAY_NAME, FormsColumns.DISPLAY_SUBTEXT, FormsColumns.JR_VERSION
+                FormsColumns.DISPLAY_NAME, FormsColumns.DISPLAY_SUBTEXT, FormsColumns.JR_VERSION, FormsColumns.FILL_STATUS,
         };
         int[] view = new int[] {
-                R.id.text1, R.id.text2, R.id.text3
+                R.id.text1, R.id.text2, R.id.text3, R.id.imageView
         };
 
         // render total instance view
         SimpleCursorAdapter instances =
-            new VersionHidingCursorAdapter(FormsColumns.JR_VERSION, this, R.layout.two_item, c, data, view);
+            new VersionHidingStyledCursorAdapter(FormsColumns.JR_VERSION, FormsColumns.FILL_STATUS, this, R.layout.two_item_status, c, data, view);
         setListAdapter(instances);
 
         if (savedInstanceState != null && savedInstanceState.containsKey(syncMsgKey)) {

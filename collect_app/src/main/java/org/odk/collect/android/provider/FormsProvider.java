@@ -93,6 +93,8 @@ public class FormsProvider extends ContentProvider {
 					+ FormsColumns.FORM_FILE_PATH + " text not null, "
 					+ FormsColumns.LANGUAGE + " text, "
 					+ FormsColumns.SUBMISSION_URI + " text, "
+					+ FormsColumns.FILL_STATUS + " text, "
+					+ FormsColumns.FILL_NEXT_DATE + " integer, "
 					+ FormsColumns.BASE64_RSA_PUBLIC_KEY + " text, "
 					+ FormsColumns.JRCACHE_FILE_PATH + " text not null );");
 		}
@@ -165,6 +167,10 @@ public class FormsProvider extends ContentProvider {
 						+ ", "
 						+ FormsColumns.SUBMISSION_URI
 						+ ", "
+						+ FormsColumns.FILL_STATUS
+						+ ", "
+						+ FormsColumns.FILL_NEXT_DATE + " integer, "
+						+ ", "
 						+ "CASE WHEN "
 						+ MODEL_VERSION
 						+ " IS NOT NULL THEN "
@@ -220,6 +226,8 @@ public class FormsProvider extends ContentProvider {
 						+ FormsColumns.FORM_FILE_PATH + ", "
 						+ FormsColumns.LANGUAGE + ", "
 						+ FormsColumns.SUBMISSION_URI + ", "
+						+ FormsColumns.FILL_STATUS + ", "
+						+ FormsColumns.FILL_NEXT_DATE + ", "
 						+ FormsColumns.JR_VERSION + ", "
 						+ FormsColumns.BASE64_RSA_PUBLIC_KEY + ", "
 						+ FormsColumns.JRCACHE_FILE_PATH + " FROM "
@@ -369,6 +377,11 @@ public class FormsProvider extends ContentProvider {
 					filePath.lastIndexOf("."));
 			String mediaPath = pathNoExtension + "-media";
 			values.put(FormsColumns.FORM_MEDIA_PATH, mediaPath);
+		}
+
+		if (values.containsKey(FormsColumns.FILL_STATUS) == false) {
+			//String status = "TO_FILL";
+			//values.put(FormsColumns.FILL_STATUS, status);
 		}
 
 		SQLiteDatabase db = getDbHelper().getWritableDatabase();
@@ -725,6 +738,9 @@ public class FormsProvider extends ContentProvider {
 		sFormsProjectionMap.put(FormsColumns.JRCACHE_FILE_PATH,
 				FormsColumns.JRCACHE_FILE_PATH);
 		sFormsProjectionMap.put(FormsColumns.LANGUAGE, FormsColumns.LANGUAGE);
+		sFormsProjectionMap.put(FormsColumns.FILL_STATUS, FormsColumns.FILL_STATUS);
+		sFormsProjectionMap.put(FormsColumns.FILL_NEXT_DATE, FormsColumns.FILL_NEXT_DATE);
+
 	}
 
 }

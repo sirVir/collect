@@ -354,4 +354,9 @@
 <string name="hourly">Every hour</string>
 <string name="ten_minutes">Every ten minutes</string>
 <string name="minute">Every minute</string>
+    <string name="survey_schedule_summary">Take schedules into consideration</string>
+    <string name="survey_schedule">Use schedules</string>
+    <string name="change_schedule_frequency">How often do you want to check if the surveys need to be filled?</string>
+    <string name="change_schedule_frequency_title">Schedule check frequency</string>
+    <string name="change_schedule_frequency_summary">Set the interval, in which the surveys will be checked</string>
 </resources>
