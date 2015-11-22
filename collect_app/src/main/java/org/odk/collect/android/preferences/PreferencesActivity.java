@@ -20,6 +20,7 @@ import org.javarosa.core.services.IPropertyManager;
 import org.odk.collect.android.R;
 import org.odk.collect.android.logic.FormController;
 import org.odk.collect.android.logic.PropertyManager;
+import org.odk.collect.android.services.SchedulerService;
 import org.odk.collect.android.services.SurveyCheckService;
 import org.odk.collect.android.utilities.MediaUtils;
 
@@ -124,8 +125,8 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
   private ListPreference mAutoPullPreference;
   private ListPreference mAutoPullFrequency;
 
-  private CheckBoxPreference surveySchedulePreference;
-  private ListPreference scheduleFrequencyPreference;
+  private CheckBoxPreference mSurveySchedulePreference;
+  private ListPreference mScheduleFrequencyPreference;
 
 
   private ListPreference mProtocolPreference;
@@ -158,8 +159,21 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
     mAutosendNetworkPreference = (CheckBoxPreference) findPreference(KEY_AUTOSEND_NETWORK);
     mAutoPullPreference = (ListPreference) findPreference(KEY_AUTOPULL_NEW);
     mAutoPullFrequency = (ListPreference) findPreference(KEY_AUTOPULL_FREQUENCY);
-    surveySchedulePreference = (CheckBoxPreference) findPreference(KEY_SURVEY_SCHEDULE);
-    scheduleFrequencyPreference = (ListPreference) findPreference(KEY_SCHEDULE_FREQUENCY);
+
+    // disable preference if switched off
+    if (mAutoPullPreference.getValue().equals("disabled"))
+    {
+      mAutoPullFrequency.setEnabled(false);
+    }
+
+    mSurveySchedulePreference = (CheckBoxPreference) findPreference(KEY_SURVEY_SCHEDULE);
+    mScheduleFrequencyPreference = (ListPreference) findPreference(KEY_SCHEDULE_FREQUENCY);
+
+    // disable preference if switched off
+    if (! mSurveySchedulePreference.isChecked())
+    {
+      mScheduleFrequencyPreference.setEnabled(false);
+    }
 
     final Context ctx = this;
     mAutoPullPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
@@ -191,23 +205,35 @@ public class PreferencesActivity extends PreferenceActivity implements OnPrefere
           }
       });
 
-    surveySchedulePreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+    mSurveySchedulePreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
-        if (newValue.toString().equals("false"))
-          scheduleFrequencyPreference.setEnabled(false);
-        else
-          scheduleFrequencyPreference.setEnabled(true);
+        if (! (newValue).equals(((CheckBoxPreference) preference).isChecked()))
+          new Thread(new Runnable() {
+            public void run() {
+              SchedulerService.scheduleRepeat(ctx);}
+          }).start();
+        if (newValue.equals(false))
+        {
+          mScheduleFrequencyPreference.setEnabled(false);
+        }
+        else {
+          mScheduleFrequencyPreference.setEnabled(true);
+        }
         return true;
 
       }
     });
 
-    scheduleFrequencyPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+    mScheduleFrequencyPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
-
-//
+        if (! newValue.toString().equals(((ListPreference) preference).getValue()))
+          new Thread(new Runnable() {
+            public void run() {
+              SchedulerService.scheduleRepeat(ctx);
+            }
+          }).start();
         return true;
       }
     });

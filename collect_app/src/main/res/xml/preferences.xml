@@ -83,7 +83,7 @@
             android:title="@string/survey_schedule" />
         <ListPreference
             android:id="@+id/schedule_frequency"
-            android:defaultValue="86400"
+            android:defaultValue="60"
             android:dialogTitle="@string/change_schedule_frequency"
             android:entries="@array/schedule_frequency_entries"
             android:entryValues="@array/schedule_frequency_values"

@@ -20,9 +20,7 @@ import org.odk.collect.android.provider.FormsProviderAPI;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.PorterDuff;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.media.Image;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.SimpleCursorAdapter;
@@ -72,7 +70,7 @@ public class VersionHidingStyledCursorAdapter extends SimpleCursorAdapter {
 							v.setImageDrawable(d);
 
 						} else if ( style == FormsProviderAPI.FormsColumns.FILL_STATUS_NOT_SCHEDULED) {
-							Drawable d = ctxt.getResources().getDrawable(android.R.drawable.stat_notify_error);
+							Drawable d = ctxt.getResources().getDrawable(android.R.drawable.ic_menu_recent_history );
 							d.setColorFilter(0x00ff0000, PorterDuff.Mode.MULTIPLY );
 							v.setImageDrawable(d);
 						} else {

@@ -19,9 +19,13 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import org.javarosa.xform.parse.XFormParser;
@@ -32,10 +36,12 @@ import org.odk.collect.android.exception.TaskCancelledException;
 import org.odk.collect.android.listeners.FormDownloaderListener;
 import org.odk.collect.android.logic.FormDetails;
 import org.odk.collect.android.preferences.PreferencesActivity;
+import org.odk.collect.android.provider.FormsProviderAPI;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.utilities.DocumentFetchResult;
 import org.odk.collect.android.utilities.FileUtils;
 import org.odk.collect.android.utilities.WebUtils;
+import org.odk.collect.android.utils.XmlUtils;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
@@ -107,8 +113,8 @@ public class DownloadFormsTask extends
                 // if we've downloaded a duplicate, this gives us the file
                 fileResult = downloadXform(fd.formName, fd.downloadUrl);
 
-                // we assume that settings are ALWAYS downloaded from the set server
-                settingResult = downloadXformSDKSetting(fd.formID, fd.formName);
+                // we assume that settings are ALWAYS downloaded from the same server
+                downloadXformSDKSetting(fd.formID, fd.formName);
 
 
                 if (fd.manifestUrl != null) {
@@ -439,6 +445,95 @@ public class DownloadFormsTask extends
             }
         }
 
+        // reading the newly saved settings file
+        FileInputStream input = null;
+
+        String formId = null;
+        int frequency = 0;
+
+        try {
+            input = new FileInputStream(f);
+            Map<String, ?> entries = XmlUtils.readMapXml(input);
+
+            for (Map.Entry<String, ?> entry : entries.entrySet()) {
+
+                Object v = entry.getValue();
+                String key = entry.getKey();
+
+                if (key == "FORM_ID") {
+                    if (v instanceof String) {
+                        formId = (String) v;
+                        if (!v.toString().isEmpty()) {
+                            formId = (String) v;
+                        } else throw new IllegalArgumentException("ID cannot be empty");
+                    } else
+                        throw new IllegalArgumentException("ID has to be of the type String");
+                }
+
+                if (key == "Frequency") {
+                    if (v instanceof Integer) {
+                        frequency = (Integer) v;
+                    } else
+                        throw new IllegalArgumentException("Frequency value needs to be of type Integer");
+                }
+                /* we don't support starting date at the moment
+                if (key == "Date") {
+                    if (v instanceof String) {
+                        startDate = (String) v;
+                        DateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        iso8601Format.parse(startDate);
+                    } else
+                        throw new IllegalArgumentException("The Starting scheduled date needs to be of String format");
+                }
+                */
+            }
+        }
+        catch (Exception e)
+        {
+            // if errors in the file, delete it - not useful
+            Log.e(t,"Error while parsing the settings file, deleting");
+            f.delete();
+            return null;
+        }
+
+
+        // we've downloaded the file, and we may have renamed it
+        // make sure it's not the same as a file we already have
+        String[] projection2 = {
+                FormsColumns.JR_FORM_ID,
+                FormsColumns.FILL_FREQUENCY,
+                FormsColumns.FILL_NEXT_DATE,
+        };
+        String[] selectionArgs2 = {
+                formId
+        };
+        String selection2 = FormsColumns.JR_FORM_ID + "=?";
+
+        Cursor c2 = null;
+        try {
+            c2 = Collect.getInstance().getContentResolver()
+                    .query(FormsColumns.CONTENT_URI, projection2, selection2, selectionArgs2, null);
+            if (c2.getCount() > 0) {
+
+                // shouldn't be more than 1
+                c2.moveToFirst();
+                ContentValues cv = new ContentValues();
+                cv.put(FormsProviderAPI.FormsColumns.FILL_FREQUENCY, frequency);
+                DateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String currentDate = iso8601Format.format(new Date());
+                cv.put(FormsProviderAPI.FormsColumns.FILL_NEXT_DATE, currentDate);
+                cv.put(FormsProviderAPI.FormsColumns.FILL_STATUS, FormsProviderAPI.FormsColumns.FILL_STATUS_SCHEDULED);
+            }
+        }
+        catch (Exception e)
+        {
+
+        }
+        finally {
+            if (c2 != null) {
+                c2.close();
+            }
+        }
         return new FileResult(f, isNew);
     }
 

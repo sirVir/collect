@@ -16,11 +16,15 @@ package org.odk.collect.android.activities;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import org.javarosa.core.model.FormIndex;
 import org.javarosa.core.model.data.IAnswerData;
@@ -39,6 +43,7 @@ import org.odk.collect.android.logic.FormController;
 import org.odk.collect.android.logic.FormController.FailedConstraint;
 import org.odk.collect.android.preferences.AdminPreferencesActivity;
 import org.odk.collect.android.preferences.PreferencesActivity;
+import org.odk.collect.android.provider.FormsProviderAPI;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
@@ -217,6 +222,9 @@ public class FormEntryActivity extends Activity implements AnimationListener,
 
 	private SharedPreferences mAdminPreferences;
 
+	private String jrFormId = null;
+	Uri uri = null;
+
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -338,11 +346,10 @@ public class FormEntryActivity extends Activity implements AnimationListener,
 
 			Intent intent = getIntent();
 			if (intent != null) {
-				Uri uri = intent.getData();
+				uri = intent.getData();
 
 				if (getContentResolver().getType(uri).equals(InstanceColumns.CONTENT_ITEM_TYPE)) {
 					// get the formId and version for this instance...
-					String jrFormId = null;
 					String jrVersion = null;
 					{
 						Cursor instanceCursor = null;
@@ -432,6 +439,7 @@ public class FormEntryActivity extends Activity implements AnimationListener,
 						}
 					}
 				} else if (getContentResolver().getType(uri).equals(FormsColumns.CONTENT_ITEM_TYPE)) {
+
 					Cursor c = null;
 					try {
 						c = getContentResolver().query(uri, null, null, null,
@@ -454,6 +462,12 @@ public class FormEntryActivity extends Activity implements AnimationListener,
 							// when that
 							// explicitly saved instance is edited via
 							// edit-saved-form.
+
+							// added to ensure access to the id
+							jrFormId = c
+									.getString(c
+											.getColumnIndex(InstanceColumns.JR_FORM_ID));
+
 							final String filePrefix = mFormPath.substring(
 									mFormPath.lastIndexOf('/') + 1,
 									mFormPath.lastIndexOf('.'))
@@ -2352,7 +2366,7 @@ public class FormEntryActivity extends Activity implements AnimationListener,
 		// Added by AnimationListener interface.
 		Log.i(t, "onAnimationStart "
 				+ ((animation == mInAnimation) ? "in"
-						: ((animation == mOutAnimation) ? "out" : "other")));
+				: ((animation == mOutAnimation) ? "out" : "other")));
 	}
 
 	/**
@@ -2503,6 +2517,7 @@ public class FormEntryActivity extends Activity implements AnimationListener,
 					Toast.LENGTH_SHORT).show();
 			sendSavedBroadcast();
 			finishReturnInstance();
+			updateScheduledTimes();
 			break;
 		case SaveToDiskTask.SAVE_ERROR:
             String message;
@@ -2533,6 +2548,74 @@ public class FormEntryActivity extends Activity implements AnimationListener,
 
 			break;
 		}
+	}
+
+	private void updateScheduledTimes  ()
+	{
+		String[] data = new String[]{
+				FormsColumns.JR_FORM_ID, FormsProviderAPI.FormsColumns.FILL_NEXT_DATE,  FormsColumns.FILL_STATUS, FormsColumns.FILL_FREQUENCY
+		};
+
+		String[] args = new String []{
+				FormsProviderAPI.FormsColumns.JR_FORM_ID, String.valueOf(jrFormId)
+		};
+		Cursor c =null;
+		try {
+			c =	Collect.getInstance().getContentResolver().query(FormsColumns.CONTENT_URI, null, null, null,  null);
+
+		try {
+			while (c.moveToNext()) {
+				try {
+					int idx_date = c.getColumnIndexOrThrow(FormsProviderAPI.FormsColumns.FILL_NEXT_DATE);
+					int idx_survey = c.getColumnIndexOrThrow(FormsColumns.JR_FORM_ID);
+					int idx_freq = c.getColumnIndexOrThrow(FormsColumns.FILL_FREQUENCY);
+
+					if (!c.isNull(idx_date) && !c.isNull(idx_survey))  {
+						if (jrFormId.contains(c.getString(idx_survey))) {
+							String storedDate = c.getString(idx_date);
+							long storedFreq = c.getLong(idx_freq);
+							DateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+							iso8601Format.setTimeZone(TimeZone.getTimeZone("GMT"));
+							try {
+								Date storedDateParsed = iso8601Format.parse(storedDate);
+								Date currentDate = Calendar.getInstance().getTime();
+								if (storedDateParsed.before(currentDate)) {
+									Date progressedDate = new Date(currentDate.getDate() + storedFreq * 1000);
+									// delay the give
+									ContentValues cv = new ContentValues();
+									cv.put(FormsProviderAPI.FormsColumns.FILL_NEXT_DATE, iso8601Format.format(progressedDate));
+									cv.put(FormsProviderAPI.FormsColumns.FILL_STATUS, FormsProviderAPI.FormsColumns.FILL_STATUS_SCHEDULED);
+
+									Collect.getInstance().getContentResolver().update(
+											FormsProviderAPI.FormsColumns.CONTENT_URI,
+											cv,
+											FormsProviderAPI.FormsColumns._ID
+													+ "="
+													+ idx_survey
+											, null);
+
+								}
+							} catch (ParseException e) {
+								Log.e(t, "Parsing ISO8601 datetime failed", e);
+							}
+						}
+					}
+
+				} catch (IllegalArgumentException e) {
+					Log.e(t, "Trying to schedule on a database without date", e);
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			Log.e(t, "Problem with accessing internal database", e);
+		}
+		} finally {
+			if (c != null) {
+				c.close();
+			}
+		}
+		return;
 	}
 
     @Override

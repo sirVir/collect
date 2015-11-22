@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -22,19 +23,28 @@ import com.google.android.gms.gcm.Task;
 import com.google.android.gms.gcm.TaskParams;
 
 import org.odk.collect.android.activities.FormDownloadList;
+import org.odk.collect.android.application.Collect;
 import org.odk.collect.android.listeners.FormListDownloaderListener;
 import org.odk.collect.android.logic.FormDetails;
 import org.odk.collect.android.preferences.PreferencesActivity;
+import org.odk.collect.android.provider.FormsProviderAPI;
 import org.odk.collect.android.tasks.DownloadFormListTask;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 
 public class SurveyCheckService extends GcmTaskService implements FormListDownloaderListener {
 
     private static final int notificationId = 420734;
     private static Boolean isScheduled = false;
-    private static Boolean isDownloaded = false;
 
 
     private DownloadFormListTask mDownloadFormListTask;
@@ -153,36 +163,77 @@ public class SurveyCheckService extends GcmTaskService implements FormListDownlo
 
     public void formListDownloadingComplete(final HashMap<String, FormDetails> value, Boolean silent) {
 
+
+
+
+
         if (!value.isEmpty()) {
 
-            Handler h = new Handler(getMainLooper());
-            final Context c = this;
+            Collection<FormDetails> vals = value.values();
+            Collection<String> existingSurveys = new HashSet<>();
+            String[] data = new String[]{
+                    FormsProviderAPI.FormsColumns.JR_FORM_ID
+            };
+
+            Cursor c = null;
             try {
-                h.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        NotificationManager notificationMgr = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
-                        Intent intent = new Intent(c, FormDownloadList.class);
-                        intent.putExtra("SurveyList", value);
+                c = Collect.getInstance().getContentResolver().query(FormsProviderAPI.FormsColumns.CONTENT_URI, data, null, null, null);
 
-                        PendingIntent pIntent = PendingIntent.getActivity(c, 0, intent, 0);
+                while (c.moveToNext()) {
+                    try {
+                        int idx_survey = c.getColumnIndexOrThrow(FormsProviderAPI.FormsColumns.JR_FORM_ID);
+                        existingSurveys.add(c.getString(idx_survey));
 
-                        Notification notification = new NotificationCompat.Builder(c)
-                                .setContentTitle("ODK Collect")
-                                .setContentText("Click to see unfilled surveys")
-                                .setTicker("Pending surveys to fill")
-                                .setSmallIcon(android.R.drawable.stat_notify_more)
-                                .setContentIntent(pIntent)
-                                .build();
-                        notification.defaults |= Notification.DEFAULT_SOUND;
-
-                        notificationMgr.notify(notificationId, notification);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error geting ID ", e);
                     }
-                });
+                }
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "Problem with accessing internal database", e);
+            } finally {
+                if (c != null) {
+                    c.close();
+                }
             }
-            isScheduled = false;
+
+            Boolean displayNotification = false;
+            for (FormDetails fd : vals) {
+                if (!existingSurveys.contains(fd.formID)) {
+                    displayNotification = true;
+                    break;
+                }
+            }
+
+            if (displayNotification) {
+                Handler h = new Handler(getMainLooper());
+                final Context ctx = this;
+                try {
+                    h.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            NotificationManager notificationMgr = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+                            Intent intent = new Intent(ctx, FormDownloadList.class);
+                            intent.putExtra("SurveyList", value);
+
+                            PendingIntent pIntent = PendingIntent.getActivity(ctx, 0, intent, 0);
+
+                            Notification notification = new NotificationCompat.Builder(ctx)
+                                    .setContentTitle("ODK Collect")
+                                    .setContentText("Click to see new surveys")
+                                    .setTicker("New surveys to download")
+                                    .setSmallIcon(android.R.drawable.stat_notify_more)
+                                    .setContentIntent(pIntent)
+                                    .build();
+                            notification.defaults |= Notification.DEFAULT_SOUND;
+
+                            notificationMgr.notify(notificationId, notification);
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                isScheduled = false;
+            }
         }
     }
 

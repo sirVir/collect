@@ -124,7 +124,11 @@ public class FormChooserList extends ListActivity implements DiskSyncListener {
     	long idFormsTable = ((SimpleCursorAdapter) getListAdapter()).getItemId(position);
         Uri formUri = ContentUris.withAppendedId(FormsColumns.CONTENT_URI, idFormsTable);
 
-		Collect.getInstance().getActivityLogger().logAction(this, "onListItemClick", formUri.toString());
+        String[] data = new String[] {
+                FormsColumns.JR_FORM_ID
+        };
+
+        Collect.getInstance().getActivityLogger().logAction(this, "onListItemClick", formUri.toString());
 
         String action = getIntent().getAction();
         if (Intent.ACTION_PICK.equals(action)) {
@@ -132,7 +136,9 @@ public class FormChooserList extends ListActivity implements DiskSyncListener {
             setResult(RESULT_OK, new Intent().setData(formUri));
         } else {
             // caller wants to view/edit a form, so launch formentryactivity
-            startActivity(new Intent(Intent.ACTION_EDIT, formUri));
+            Intent editingIntent = new Intent(Intent.ACTION_EDIT, formUri);
+            editingIntent.putExtra("formID", idFormsTable);
+            startActivity(editingIntent);
         }
 
         finish();

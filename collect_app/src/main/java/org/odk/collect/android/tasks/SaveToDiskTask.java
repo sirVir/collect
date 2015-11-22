@@ -18,6 +18,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
 
 import org.javarosa.core.model.FormDef;
 import org.javarosa.core.services.transport.payload.ByteArrayPayload;
@@ -27,6 +33,7 @@ import org.odk.collect.android.application.Collect;
 import org.odk.collect.android.exception.EncryptionException;
 import org.odk.collect.android.listeners.FormSavedListener;
 import org.odk.collect.android.logic.FormController;
+import org.odk.collect.android.provider.FormsProviderAPI;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
@@ -39,6 +46,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
+
+import com.google.android.gms.gcm.GcmNetworkManager;
 
 /**
  * Background task for loading a form.
@@ -53,6 +62,7 @@ public class SaveToDiskTask extends AsyncTask<Void, String, SaveResult> {
     private Boolean mSave;
     private Boolean mMarkCompleted;
     private Uri mUri;
+    // Uri for the FormProvider database
     private String mInstanceName;
 
     public static final int SAVED = 500;
@@ -68,7 +78,6 @@ public class SaveToDiskTask extends AsyncTask<Void, String, SaveResult> {
         mMarkCompleted = markCompleted;
         mInstanceName = updatedName;
     }
-
 
     /**
      * Initialize {@link FormEntryController} with {@link FormDef} from binary or from XML. If given

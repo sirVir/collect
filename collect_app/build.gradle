@@ -37,7 +37,10 @@ android {
             // Build type for snapshots
         }
         debug {
-            testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
+          //  testCoverageEnabled(testCoverage) // Allows AndroidTest JaCoCo reports to be generated
+            minifyEnabled false
+            shrinkResources false
+            debuggable true
         }
     }
 

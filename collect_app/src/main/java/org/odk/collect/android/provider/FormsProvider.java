@@ -15,6 +15,7 @@
 package org.odk.collect.android.provider;
 
 import java.io.File;
+import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -94,7 +95,8 @@ public class FormsProvider extends ContentProvider {
 					+ FormsColumns.LANGUAGE + " text, "
 					+ FormsColumns.SUBMISSION_URI + " text, "
 					+ FormsColumns.FILL_STATUS + " text, "
-					+ FormsColumns.FILL_NEXT_DATE + " integer, "
+					+ FormsColumns.FILL_NEXT_DATE + " text, "
+					+ FormsColumns.FILL_FREQUENCY + " integer, "
 					+ FormsColumns.BASE64_RSA_PUBLIC_KEY + " text, "
 					+ FormsColumns.JRCACHE_FILE_PATH + " text not null );");
 		}
@@ -169,7 +171,9 @@ public class FormsProvider extends ContentProvider {
 						+ ", "
 						+ FormsColumns.FILL_STATUS
 						+ ", "
-						+ FormsColumns.FILL_NEXT_DATE + " integer, "
+						+ FormsColumns.FILL_NEXT_DATE
+						+ ", "
+						+ FormsColumns.FILL_FREQUENCY
 						+ ", "
 						+ "CASE WHEN "
 						+ MODEL_VERSION
@@ -228,6 +232,7 @@ public class FormsProvider extends ContentProvider {
 						+ FormsColumns.SUBMISSION_URI + ", "
 						+ FormsColumns.FILL_STATUS + ", "
 						+ FormsColumns.FILL_NEXT_DATE + ", "
+						+ FormsColumns.FILL_FREQUENCY + ", "
 						+ FormsColumns.JR_VERSION + ", "
 						+ FormsColumns.BASE64_RSA_PUBLIC_KEY + ", "
 						+ FormsColumns.JRCACHE_FILE_PATH + " FROM "
@@ -740,6 +745,8 @@ public class FormsProvider extends ContentProvider {
 		sFormsProjectionMap.put(FormsColumns.LANGUAGE, FormsColumns.LANGUAGE);
 		sFormsProjectionMap.put(FormsColumns.FILL_STATUS, FormsColumns.FILL_STATUS);
 		sFormsProjectionMap.put(FormsColumns.FILL_NEXT_DATE, FormsColumns.FILL_NEXT_DATE);
+		sFormsProjectionMap.put(FormsColumns.FILL_FREQUENCY, FormsColumns.FILL_FREQUENCY);
+
 
 	}
 
